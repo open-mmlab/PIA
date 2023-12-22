@@ -3,7 +3,7 @@ prompts:
 - - 1man is smiling, masterpiece, best quality, 1boy, afro, dark skin, playing guitar, concert, upper body, sweat, stage lights, oversized hawaiian shirt, intricate, print, pattern, happy, necklace, bokeh, jeans, drummer, dynamic pose
   - 1man is crying, masterpiece, best quality, 1boy, afro, dark skin, playing guitar, concert, upper body, sweat, stage lights, oversized hawaiian shirt, intricate, print, pattern, happy, necklace, bokeh, jeans, drummer, dynamic pose
   - 1man is singing, masterpiece, best quality, 1boy, afro, dark skin, playing guitar, concert, upper body, sweat, stage lights, oversized hawaiian shirt, intricate, print, pattern, happy, necklace, bokeh, jeans, drummer, dynamic pose
-n_prompt: 
+n_prompt:
   - 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
 validation_data:
   input_name: 'concert'
@@ -12,8 +12,8 @@ validation_data:
   mask_sim_range: [-3]
 generate:
   use_lora: false
-  use_db: true 
+  use_db: true
   global_seed: 4292543217695451092 # To get 3d style shown in github, you can use seed: 4292543217695451088
   lora_path: ""
-  db_path: "models/DreamBooth_LoRA/realisticVisionV60B1_v51VAE.safetensors" # TODO rcnzCartoon3d_v20.safetensors
+  db_path: "models/DreamBooth_LoRA/realisticVisionV51_v51VAE.safetensors" # TODO rcnzCartoon3d_v20.safetensors
   lora_alpha: 0.8
