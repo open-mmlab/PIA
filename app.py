@@ -191,7 +191,7 @@ class AnimateController:
         else:
             torch.seed()
         seed = torch.initial_seed()
-        init_img, w, h = preprocess_img(init_img)
+        init_img, h, w = preprocess_img(init_img)
         sample = self.pipeline(
             image=init_img,
             prompt=prompt_textbox,
