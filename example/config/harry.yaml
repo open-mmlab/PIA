@@ -1,0 +1,19 @@
+base: 'example/config/base.yaml'
+prompts:
+- - 1boy smiling
+  - 1boy playing magic fire
+  - 1boy is waving hands
+n_prompt: 
+  - 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
+validation_data:
+  input_name: 'harry'
+  validation_input_path: 'example/img'
+  save_path: 'example/result'
+  mask_sim_range: [1]
+generate:
+  use_lora: false
+  use_db: true 
+  global_seed: 10201403011320481249
+  lora_path: ""
+  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v20.safetensors"
+  lora_alpha: 0.8

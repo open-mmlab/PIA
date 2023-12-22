@@ -1,0 +1,19 @@
+base: 'example/config/base.yaml'
+prompts:
+- - cherry blossoms in the wind, raidenshogundef, yaemikodef, best quality, 4k
+n_prompt: 
+  - 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
+validation_data:
+  input_name: 'genshin'
+  validation_input_path: 'example/img'
+  save_path: 'example/result'
+  mask_sim_range: [0, 1, 2]
+generate:
+  use_lora: false
+  use_db: true 
+  sample_width: 512
+  sample_height: 768
+  global_seed:  10041042941301238026
+  lora_path: "models/DreamBooth_LoRA/genshin.safetensors"
+  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v20.safetensors"
+  lora_alpha: 0.4
