@@ -552,6 +552,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         mask_sim_template_idx: int = 0,
         ip_adapter_scale: float = 0,
         strength: float = 1,
+        progress_fn=None,
         **kwargs,
     ):
         # Default height and width to unet
@@ -664,38 +665,43 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             latents = self.scheduler.add_noise(masked_image[0], noise, timesteps[0])
             print(latents.shape)
 
-        with self.progress_bar(total=num_inference_steps) as progress_bar:
-            for i, t in enumerate(timesteps):
-                # expand the latents if we are doing classifier free guidance
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+        if progress_fn is None:
+            progress_bar = tqdm(timesteps)
+            terminal_pbar = None
+        else:
+            progress_bar = progress_fn.tqdm(timesteps)
+            terminal_pbar = tqdm(total=len(timesteps))
 
-                # save_feature_map(latent_model_input[0], t, str(global_inf_num))
+        # with self.progress_bar(total=num_inference_steps) as progress_bar:
+        for i, t in enumerate(progress_bar):
+            # expand the latents if we are doing classifier free guidance
+            latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+            latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
-                # predict the noise residual
-                # noise_pred = self.unet(latent_model_input, mask, masked_image, t, encoder_hidden_states=text_embeddings).sample.to(dtype=latents_dtype)
-                noise_pred = self.unet(
-                    latent_model_input,
-                    mask,
-                    masked_image,
-                    t,
-                    encoder_hidden_states=text_embeddings,
-                    image_embeds=image_embeds
-                )['sample']
+            # predict the noise residual
+            noise_pred = self.unet(
+                latent_model_input,
+                mask,
+                masked_image,
+                t,
+                encoder_hidden_states=text_embeddings,
+                image_embeds=image_embeds
+            )['sample']
 
-                # perform guidance
-                if do_classifier_free_guidance:
-                    noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                    noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+            # perform guidance
+            if do_classifier_free_guidance:
+                noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
+                noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
-                # compute the previous noisy sample x_t -> x_t-1
-                latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
+            # compute the previous noisy sample x_t -> x_t-1
+            latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs).prev_sample
 
-                # call the callback, if provided
-                if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
-                    progress_bar.update()
-                    if callback is not None and i % callback_steps == 0:
-                        callback(i, t, latents)
+            # call the callback, if provided
+            if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+                if callback is not None and i % callback_steps == 0:
+                    callback(i, t, latents)
+            if terminal_pbar is not None:
+                terminal_pbar.update(1)
 
         # Post-processing
         video = self.decode_latents(latents.to(device, dtype=self.vae.dtype))

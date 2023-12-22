@@ -9,7 +9,7 @@
 
 [![arXiv](https://img.shields.io/badge/arXiv-2312.13964-b31b1b.svg)](https://arxiv.org/abs/2312.13964)
 [![Project Page](https://img.shields.io/badge/PIA-Website-green)](https://pi-animator.github.io)
-[![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/)
+[![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia)
 
 PIA is a personalized image animation method which can generate videos with **high motion controllability** and **strong text and image alignment**.
 
@@ -20,14 +20,14 @@ PIA is a personalized image animation method which can generate videos with **hi
 [2023/12/22] Release the model and demo of PIA. Try it to make your personalized movie!
 
 - Online Demo on [OpenXLab](https://openxlab.org.cn)
-- Checkpoint on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
+- Checkpoint on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link) or [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/header/openxlab_models.svg)](https://openxlab.org.cn/models/detail/zhangyiming/PIA)
 
 ## Setup
 ### Prepare Environment
 ```
 conda env create -f environment.yaml
 conda activate pia
-``` 
+```
 
 ### Download checkpoints
 <li>Download the Stable Diffusion v1-5</li>
@@ -69,7 +69,7 @@ Put checkpoints as follows:
 
 ## Usage
 ### Image Animation
-Image to Video result can be obtained by: 
+Image to Video result can be obtained by:
 ```
 python inference.py --config=example/config/lighthouse.yaml
 python inference.py --config=example/config/harry.yaml
@@ -113,17 +113,17 @@ Run the command above, you will get:
       <td><img src="__assets__/image_animation/majic/2.gif"></td>
       <td><img src="__assets__/image_animation/majic/3.gif"></td>
     </tr>
-      
+
 </table>
 
 <!-- More results:
 
 <table class="center">
-    <tr> 
+    <tr>
       <td><p style="text-align: center">Input Image</p></td>
     </tr>
-    <tr> 
-    </tr> 
+    <tr>
+    </tr>
 </table> -->
 
 ### Motion Magnitude
@@ -142,25 +142,25 @@ python inference.py --config=example/config/genshin.yaml
 ```
 
 <table class="center">
-    <tr> 
+    <tr>
       <td><p style="text-align: center">Input Image<br>& Prompt</p></td>
       <td><p style="text-align: center">Small Motion</p></td>
       <td><p style="text-align: center">Moderate Motion</p></td>
       <td><p style="text-align: center">Large Motion</p></td>
     </tr>
-    <tr> 
+    <tr>
     <td><img src="__assets__/image_animation/magnitude/labrador.png" style="width: 220px">a golden labrador is running</td>
      <td><img src="__assets__/image_animation/magnitude/1.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/2.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/3.gif"></td>
-    </tr> 
-    <tr> 
+    </tr>
+    <tr>
     <td><img src="__assets__/image_animation/magnitude/bear/bear.jpg" style="width: 220px">1bear is walking, ...</td>
      <td><img src="__assets__/image_animation/magnitude/bear/1.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/bear/2.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/bear/3.gif"></td>
-    </tr> 
-    <tr> 
+    </tr>
+    <tr>
     <td><img src="__assets__/image_animation/magnitude/genshin/genshin.jpg" style="width: 220px">cherry blossom, ...</td>
      <td><img src="__assets__/image_animation/magnitude/genshin/1.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/genshin/2.gif"></td>
