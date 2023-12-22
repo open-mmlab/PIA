@@ -208,7 +208,7 @@ class UCFCenterCropVideo:
     
 class KineticsRandomCropResizeVideo:
     '''
-    Slide along the long edge, with the short edge as crop size. And resie to the desired size.
+    Slide along the long edge, with the short edge as crop size. And resize to the desired size.
     '''
     def __init__(
             self,
