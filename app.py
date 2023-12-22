@@ -152,6 +152,7 @@ class AnimateController:
         cfg_scale_slider,
         seed_textbox,
         ip_adapter_scale,
+        progress=gr.Progress(),
     ):
         if not self.loaded:
             raise gr.Error(f"Please load model first!")
@@ -173,6 +174,7 @@ class AnimateController:
             video_length=length_slider,
             mask_sim_template_idx=motion_scale,
             ip_adapter_scale=ip_adapter_scale,
+            progress_fn=progress,
         ).videos
 
         save_sample_path = os.path.join(
@@ -212,7 +214,8 @@ def ui():
             gr.Markdown(
                 "<div align='center'><font size='5'><a href='https://pi-animator.github.io/'>Project Page</a> &ensp;"  # noqa
                 "<a href='https://arxiv.org/abs/2312.13964/'>Paper</a> &ensp;"
-                "<a href='https://github.com/open-mmlab/pia'>Code</a> </font></div>"  # noqa
+                "<a href='https://github.com/open-mmlab/pia'>Code</a> &ensp;"  # noqa
+                "<a href='https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia'>Demo</a> </font></div>"  # noqa
             )
 
         with gr.Column(variant="panel"):
@@ -307,30 +310,29 @@ def ui():
                         return motion_idx
 
                     with gr.Row():
-                        # motion_idx = gr.Interface(fn=GenerationMode, inputs=[motion_scale_silder, 
-                        #                         gr.Radio(['Animation', 'Style Transfer', 'Loop Video'], label='Generation Mode', value=0)], 
-                        #                           outputs='number', live=True, allow_flagging=False, show_output=False, show_input=False)
                         style_selection = gr.Radio(
-                            ['Animation', 'Style Transfer', 'Loop Video'], 
+                            ['Animation', 'Style Transfer', 'Loop Video'],
                             label='Generation Mode', value=0)
                         style_selection.change(
-                            fn=GenerationMode, 
-                            inputs=[motion_scale_silder, style_selection], 
+                            fn=GenerationMode,
+                            inputs=[motion_scale_silder, style_selection],
                             outputs=[motion_idx]
                         )
                         motion_scale_silder.change(
-                            fn=GenerationMode, 
-                            inputs=[motion_scale_silder, style_selection], 
+                            fn=GenerationMode,
+                            inputs=[motion_scale_silder, style_selection],
                             outputs=[motion_idx]
                         )
-                    # motion_idx = motion_idx if motion_idx is not None else motion_scale_silder 
 
                     with gr.Row():
                         seed_textbox = gr.Textbox(label="Seed", value=-1)
                         seed_button = gr.Button(
                             value="\U0001F3B2", elem_classes="toolbutton")
-                        seed_button.click(fn=lambda: gr.Textbox.update(
-                            value=random.randint(1, 1e8)), inputs=[], outputs=[seed_textbox])
+                    seed_button.click(
+                        fn=lambda x: random.randint(1, 1e8),
+                        outputs=[seed_textbox],
+                        queue=False
+                    )
 
                     generate_button = gr.Button(
                         value="Generate", variant='primary')
