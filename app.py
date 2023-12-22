@@ -1,4 +1,3 @@
-
 import json
 import os
 import os.path as osp
@@ -8,12 +7,14 @@ from datetime import datetime
 from glob import glob
 
 import gradio as gr
+import numpy as np
 import torch
 from diffusers import DDIMScheduler, EulerDiscreteScheduler, PNDMScheduler
 from omegaconf import OmegaConf
+from PIL import Image
 
 from animatediff.pipelines import I2VPipeline
-from animatediff.utils.util import RANGE_LIST, save_videos_grid
+from animatediff.utils.util import save_videos_grid
 
 sample_idx = 0
 scheduler_dict = {
@@ -50,6 +51,34 @@ N_PROMPT = ('wrong white balance, dark, sketches,worst quality,low quality, '
             'bad_pictures, negative_hand-neg')
 
 
+def preprocess_img(img_np, max_size: int = 512):
+
+    ori_image = Image.fromarray(img_np).convert('RGB')
+
+    width, height = ori_image.size
+
+    long_edge = max(width, height)
+    if long_edge > max_size:
+        scale_factor = max_size / long_edge
+    else:
+        scale_factor = 1
+    width = int(width * scale_factor)
+    height = int(height * scale_factor)
+    ori_image = ori_image.resize((width, height))
+
+    if (width % 8 != 0) or (height % 8 != 0):
+        in_width = (width // 8) * 8
+        in_height = (height // 8) * 8
+    else:
+        in_width = width
+        in_height = height
+        in_image = ori_image
+
+    in_image = ori_image.resize((in_width, in_height))
+    in_image_np = np.array(in_image)
+    return in_image_np, in_height, in_width
+
+
 class AnimateController:
     def __init__(self):
 
@@ -58,7 +87,7 @@ class AnimateController:
         self.personalized_model_dir = os.path.join(
             self.basedir, "models", "DreamBooth_LoRA")
         self.ip_adapter_dir = os.path.join(
-            self.basedir, "models", "IP_Adapter" )
+            self.basedir, "models", "IP_Adapter")
         self.savedir = os.path.join(
             self.basedir, args.save_path, datetime.now().strftime("Gradio-%Y-%m-%dT%H-%M-%S"))
         self.savedir_sample = os.path.join(self.savedir, "sample")
@@ -89,8 +118,8 @@ class AnimateController:
             return False
 
         if not 'ip-adapter_sd15.bin' not in file_list:
-            print(f'Cannot find "ip-adapter_sd15.bin" under {self.ip_adapter_dir}')
-            # gr.Error(f'Cannot find "ip-adapter_sd15.bin" under {self.ip_adapter_dir}')
+            print('Cannot find "ip-adapter_sd15.bin" '
+                  f'under {self.ip_adapter_dir}')
             return False
         if not 'image_encoder' not in file_list:
             print(f'Cannot find "image_encoder" under {self.ip_adapter_dir}')
@@ -138,6 +167,8 @@ class AnimateController:
         print('Load Finish!')
         self.loaded = True
 
+        return 'Load'
+
     def animate(
         self,
         init_img,
@@ -146,9 +177,7 @@ class AnimateController:
         negative_prompt_textbox,
         sampler_dropdown,
         sample_step_slider,
-        width_slider,
         length_slider,
-        height_slider,
         cfg_scale_slider,
         seed_textbox,
         ip_adapter_scale,
@@ -162,16 +191,16 @@ class AnimateController:
         else:
             torch.seed()
         seed = torch.initial_seed()
-
+        init_img, w, h = preprocess_img(init_img)
         sample = self.pipeline(
             image=init_img,
             prompt=prompt_textbox,
             negative_prompt=negative_prompt_textbox,
             num_inference_steps=sample_step_slider,
             guidance_scale=cfg_scale_slider,
-            width=width_slider,
-            height=height_slider,
-            video_length=length_slider,
+            width=w,
+            height=h,
+            video_length=16,
             mask_sim_template_idx=motion_scale,
             ip_adapter_scale=ip_adapter_scale,
             progress_fn=progress,
@@ -187,8 +216,8 @@ class AnimateController:
             "sampler": sampler_dropdown,
             "num_inference_steps": sample_step_slider,
             "guidance_scale": cfg_scale_slider,
-            "width": width_slider,
-            "height": height_slider,
+            "width": w,
+            "height": h,
             "video_length": length_slider,
             "seed": seed,
             "motion": motion_scale,
@@ -255,15 +284,15 @@ def ui():
                 personalized_refresh_button.click(fn=update_personalized_model, inputs=[], outputs=[
                                                   base_model_dropdown, lora_model_dropdown])
 
-
             load_model_button = gr.Button(value='Load')
             load_model_button.click(
                 fn=controller.load_model,
                 inputs=[
-                        base_model_dropdown,
-                        lora_model_dropdown,
-                        lora_alpha_slider,
-                        ])
+                    base_model_dropdown,
+                    lora_model_dropdown,
+                    lora_alpha_slider,
+                ],
+                outputs=[load_model_button])
 
         with gr.Column(variant="panel"):
             gr.Markdown(
@@ -275,7 +304,7 @@ def ui():
             prompt_textbox = gr.Textbox(label="Prompt", lines=2)
             negative_prompt_textbox = gr.Textbox(
                 value=N_PROMPT,
-                label="Negative prompt", lines=2)
+                label="Negative prompt", lines=1)
 
             with gr.Row(equal_height=False):
                 with gr.Column():
@@ -288,17 +317,14 @@ def ui():
                         sample_step_slider = gr.Slider(
                             label="Sampling steps", value=25, minimum=10, maximum=100, step=1)
 
-                    width_slider = gr.Slider(
-                        label="Width", value=512, minimum=256, maximum=1024, step=64)
-                    height_slider = gr.Slider(
-                        label="Height", value=512, minimum=256, maximum=1024, step=64)
                     length_slider = gr.Slider(
                         label="Animation length", value=16, minimum=8, maximum=24, step=1)
                     cfg_scale_slider = gr.Slider(
                         label="CFG Scale", value=7.5, minimum=0, maximum=20)
                     motion_scale_silder = gr.Slider(
                         label='Motion Scale', value=motion_idx.value, step=1, minimum=0, maximum=2)
-                    ip_adapter_scale = gr.Slider(label='IP-Apdater Scale', value=0.0, minimum=0, maximum=1)
+                    ip_adapter_scale = gr.Slider(
+                        label='IP-Apdater Scale', value=0.0, minimum=0, maximum=1)
 
                     def GenerationMode(motion_scale_silder, option):
                         if option == 'Animation':
@@ -312,7 +338,7 @@ def ui():
                     with gr.Row():
                         style_selection = gr.Radio(
                             ['Animation', 'Style Transfer', 'Loop Video'],
-                            label='Generation Mode', value=0)
+                            label='Generation Mode', value='Animation')
                         style_selection.change(
                             fn=GenerationMode,
                             inputs=[motion_scale_silder, style_selection],
@@ -349,9 +375,7 @@ def ui():
                     negative_prompt_textbox,
                     sampler_dropdown,
                     sample_step_slider,
-                    width_slider,
                     length_slider,
-                    height_slider,
                     cfg_scale_slider,
                     seed_textbox,
                     ip_adapter_scale,
