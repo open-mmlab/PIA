@@ -20,6 +20,7 @@ PIA is a personalized image animation method which can generate videos with **hi
 [2023/12/22] Release the model and demo of PIA. Try it to make your personalized movie!
 
 - Online Demo on [OpenXLab](https://openxlab.org.cn)
+- Checkpoint on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
 
 ## Setup
 ### Prepare Environment
@@ -49,6 +50,9 @@ bash download_bashscripts/3-MajicMix.sh
 ```
 bash download_bashscripts/0-PIA.sh
 ```
+
+
+You can also download *pia.ckpt* through this link on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
 
 Put checkpoints as follows:
 ```
