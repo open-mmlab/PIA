@@ -3,7 +3,7 @@ prompts:
 - - lightning, lighthouse
   - sun rising, lighthouse
   - fireworks, lighthouse
-n_prompt: 
+n_prompt:
   - 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
 validation_data:
   input_name: 'lighthouse'
@@ -15,5 +15,5 @@ generate:
   use_db: true
   global_seed: 5658137986800322011
   lora_path: ""
-  db_path: "models/DreamBooth_LoRA/realisticVisionV60B1_v51VAE.safetensors"
+  db_path: "models/DreamBooth_LoRA/realisticVisionV51_v51VAE.safetensors"
   lora_alpha: 0.8
