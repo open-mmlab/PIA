@@ -1,6 +1,6 @@
 # PIA：Personalized Image Animator
 
-[**PIA: Your Personalized Image Animator via Plug-and-Play Modules in Text-to-Image Models**](https://arxiv.org)
+[**PIA: Your Personalized Image Animator via Plug-and-Play Modules in Text-to-Image Models**](https://arxiv.org/abs/2312.13964)
 
 [Yiming Zhang†](https://github.com/ymzhang0319), [Zhening Xing†](https://github.com/LeoXing1996/), [Yanhong Zeng](https://zengyh1900.github.io/), [Youqing Fang](https://github.com/FangYouqing), [Kai Chen*](https://chenkai.site/)
 
