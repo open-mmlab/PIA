@@ -458,12 +458,24 @@ class CrossAttention(nn.Module):
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         return hidden_states
 
+    def set_use_memory_efficient_attention_xformers(self, *args, **kwargs):
+        print('Set Xformers for MotionModule\'s Attention.')
+        self._use_memory_efficient_attention_xformers = True
+
     def _memory_efficient_attention_xformers(self, query, key, value, attention_mask):
         # TODO attention_mask
         query = query.contiguous()
         key = key.contiguous()
         value = value.contiguous()
         hidden_states = xformers.ops.memory_efficient_attention(query, key, value, attn_bias=attention_mask)
+        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
+        return hidden_states
+
+    def _memory_efficient_attention_pt20(self, query, key, value, attention_mask):
+        query = query.contiguous()
+        key = key.contiguous()
+        value = value.contiguous()
+        hidden_states = torch.nn.functional.scaled_dot_product_attention(query, key, value, attn_mask=attention_mask, dropout_p=0, is_causal=False)
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         return hidden_states
 
@@ -532,7 +544,12 @@ class VersatileAttention(CrossAttention):
                 attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
 
         # attention, what we cannot get enough of
-        if self._use_memory_efficient_attention_xformers:
+        if hasattr(F, 'scaled_dot_product_attention'):
+            # NOTE: pt20's scaled_dot_product_attention seems more memory efficient than
+            # xformers' memory_efficient_attention, set it as the first class citizen
+            hidden_states = self._memory_efficient_attention_pt20(query, key, value, attention_mask)
+            hidden_states = hidden_states.to(query.dtype)
+        elif self._use_memory_efficient_attention_xformers:
             hidden_states = self._memory_efficient_attention_xformers(query, key, value, attention_mask)
             # Some versions of xformers return output in fp32, cast it back to the dtype of the input
             hidden_states = hidden_states.to(query.dtype)

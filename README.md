@@ -10,6 +10,14 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2312.13964-b31b1b.svg)](https://arxiv.org/abs/2312.13964)
 [![Project Page](https://img.shields.io/badge/PIA-Website-green)](https://pi-animator.github.io)
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia)
+<a target="_blank" href="https://huggingface.co/spaces/Leoxing/PIA">
+  <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="Open in HugginFace"/>
+</a>
+
+You may also want to try other project from our team:
+<a target="_blank" href="https://github.com/open-mmlab/mmagic">
+  <img src="https://github.com/open-mmlab/mmagic/assets/28132635/15aab910-f5c4-4b76-af9d-fe8eead1d930" height=20 alt="MMagic"/>
+</a>
 
 PIA is a personalized image animation method which can generate videos with **high motion controllability** and **strong text and image alignment**.
 
@@ -17,6 +25,10 @@ PIA is a personalized image animation method which can generate videos with **hi
 <img src="__assets__/image_animation/teaser/teaser.gif">
 
 ## What's New
+[2023/12/28] PIA can animate a 1024x1024 image with just 16GB of GPU memory with `scaled_dot_product_attention`!
+
+[2023/12/25] HuggingFace demo is available now! [🤗 Hub](https://huggingface.co/spaces/Leoxing/PIA/)
+
 [2023/12/22] Release the model and demo of PIA. Try it to make your personalized movie!
 
 - Online Demo on [OpenXLab](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia)
@@ -24,10 +36,22 @@ PIA is a personalized image animation method which can generate videos with **hi
 
 ## Setup
 ### Prepare Environment
+
+Use the following command to install Pytorch==2.0.0 and other dependencies:
+
+```
+conda env create -f environment-pt2.yaml
+conda activate pia
+```
+
+If you want to use lower version of Pytorch (e.g. 1.13.1), you can use the following command:
+
 ```
 conda env create -f environment.yaml
 conda activate pia
 ```
+
+We strongly recommand you to use Pytorch==2.0.0 which supports `scaled_dot_product_attention` for memory-efficient image animation.
 
 ### Download checkpoints
 <li>Download the Stable Diffusion v1-5</li>
