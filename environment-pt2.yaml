@@ -1,0 +1,22 @@
+name: pia
+channels:
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.10
+  - pytorch=2.0.0
+  - torchvision=0.15.0
+  - pytorch-cuda=11.8
+  - pip
+  - pip:
+    - diffusers==0.24.0
+    - transformers==4.25.1
+    - xformers
+    - imageio==2.33.1
+    - decord==0.6.0
+    - gdown
+    - einops
+    - omegaconf
+    - safetensors
+    - gradio
+    - wandb

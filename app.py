@@ -181,6 +181,7 @@ class AnimateController:
         cfg_scale_slider,
         seed_textbox,
         ip_adapter_scale,
+        max_size,
         progress=gr.Progress(),
     ):
         if not self.loaded:
@@ -191,7 +192,7 @@ class AnimateController:
         else:
             torch.seed()
         seed = torch.initial_seed()
-        init_img, h, w = preprocess_img(init_img)
+        init_img, h, w = preprocess_img(init_img, max_size)
         sample = self.pipeline(
             image=init_img,
             prompt=prompt_textbox,
@@ -317,6 +318,10 @@ def ui():
                         sample_step_slider = gr.Slider(
                             label="Sampling steps", value=25, minimum=10, maximum=100, step=1)
 
+                    max_size_slider = gr.Slider(
+                        label='Max size (The long edge of the input image will be resized to this value, larger value means slower inference speed)',
+                        value=512, step=64, minimum=512, maximum=1024)
+
                     length_slider = gr.Slider(
                         label="Animation length", value=16, minimum=8, maximum=24, step=1)
                     cfg_scale_slider = gr.Slider(
@@ -379,6 +384,7 @@ def ui():
                     cfg_scale_slider,
                     seed_textbox,
                     ip_adapter_scale,
+                    max_size_slider
                 ],
                 outputs=[result_video]
             )
@@ -388,5 +394,6 @@ def ui():
 
 if __name__ == "__main__":
     demo = ui()
+    demo.queue(3)
     demo.launch(server_name=args.server_name,
                 server_port=args.port, share=args.share, allowed_paths=['pia.png'])
