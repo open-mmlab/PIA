@@ -13,6 +13,7 @@
 <a target="_blank" href="https://huggingface.co/spaces/Leoxing/PIA">
   <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="Open in HugginFace"/>
 </a>
+[![Replicate](https://replicate.com/cjwbw/pia/badge)](https://replicate.com/cjwbw/pia) 
 
 You may also want to try other project from our team:
 <a target="_blank" href="https://github.com/open-mmlab/mmagic">

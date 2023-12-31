@@ -1,0 +1,25 @@
+# Configuration for Cog ⚙️
+# Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
+
+build:
+  gpu: true
+  python_version: "3.11"
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+  python_packages:
+    - torch==2.0.1
+    - torchvision==0.15.2
+    - diffusers==0.24.0
+    - transformers==4.36.0
+    - accelerate==0.25.0
+    - imageio==2.27.0
+    - decord==0.6.0
+    - einops==0.7.0
+    - omegaconf==2.3.0
+    - safetensors==0.4.1
+    - opencv-python==4.8.1.78
+    - moviepy==1.0.3
+  run:
+    - pip install xformers
+predict: "predict.py:Predictor"
