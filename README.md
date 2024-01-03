@@ -10,6 +10,8 @@
 [![arXiv](https://img.shields.io/badge/arXiv-2312.13964-b31b1b.svg)](https://arxiv.org/abs/2312.13964)
 [![Project Page](https://img.shields.io/badge/PIA-Website-green)](https://pi-animator.github.io)
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia)
+[![Third Party Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/camenduru/PIA-colab/blob/main/PIA_colab.ipynb)
+[![HuggingFace Model](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model-blue)](https://huggingface.co/Leoxing/PIA)
 <a target="_blank" href="https://huggingface.co/spaces/Leoxing/PIA">
   <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="Open in HugginFace"/>
 </a>
@@ -22,10 +24,11 @@ You may also want to try other project from our team:
 
 PIA is a personalized image animation method which can generate videos with **high motion controllability** and **strong text and image alignment**.
 
-
 <img src="__assets__/image_animation/teaser/teaser.gif">
 
 ## What's New
+[2024/01/03] Add third-party [Colab](https://github.com/camenduru/PIA-colab)!
+
 [2023/12/28] PIA can animate a 1024x1024 image with just 16GB of GPU memory with `scaled_dot_product_attention`!
 
 [2023/12/25] HuggingFace demo is available now! [🤗 Hub](https://huggingface.co/spaces/Leoxing/PIA/)
@@ -77,7 +80,8 @@ bash download_bashscripts/0-PIA.sh
 ```
 
 
-You can also download *pia.ckpt* through this link on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
+You can also download *pia.ckpt* through link on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
+or [HuggingFace](https://huggingface.co/Leoxing/PIA).
 
 Put checkpoints as follows:
 ```
