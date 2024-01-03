@@ -26,8 +26,8 @@ N_PROMPT = (
 
 BASE_CONFIG = "example/config/base.yaml"
 STYLE_CONFIG_LIST = {
-    "realistic": "example/openxlab/1-realistic.yaml",
-    "3d_cartoon": "example/openxlab/3-3d.yaml",
+    "realistic": "example/replicate/1-realistic.yaml",
+    "3d_cartoon": "example/replicate/3-3d.yaml",
 }
 
 

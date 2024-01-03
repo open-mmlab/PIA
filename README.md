@@ -27,6 +27,8 @@ PIA is a personalized image animation method which can generate videos with **hi
 <img src="__assets__/image_animation/teaser/teaser.gif">
 
 ## What's New
+[2024/01/03] Add [Replicate Demo & API](https://replicate.com/cjwbw/pia)!
+
 [2024/01/03] Add third-party [Colab](https://github.com/camenduru/PIA-colab)!
 
 [2023/12/28] PIA can animate a 1024x1024 image with just 16GB of GPU memory with `scaled_dot_product_attention`!
