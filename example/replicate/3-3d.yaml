@@ -1,0 +1,8 @@
+dreambooth: 'rcnzCartoon3d_v10.safetensors'
+
+n_prompt: 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
+prefix: ''
+
+guidance_scale: 7
+
+ip_adapter_scale: 0.0

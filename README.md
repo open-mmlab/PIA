@@ -15,6 +15,7 @@
 <a target="_blank" href="https://huggingface.co/spaces/Leoxing/PIA">
   <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="Open in HugginFace"/>
 </a>
+[![Replicate](https://replicate.com/cjwbw/pia/badge)](https://replicate.com/cjwbw/pia) 
 
 You may also want to try other project from our team:
 <a target="_blank" href="https://github.com/open-mmlab/mmagic">
@@ -26,6 +27,8 @@ PIA is a personalized image animation method which can generate videos with **hi
 <img src="__assets__/image_animation/teaser/teaser.gif">
 
 ## What's New
+[2024/01/03] Add [Replicate Demo & API](https://replicate.com/cjwbw/pia)!
+
 [2024/01/03] Add third-party [Colab](https://github.com/camenduru/PIA-colab)!
 
 [2023/12/28] PIA can animate a 1024x1024 image with just 16GB of GPU memory with `scaled_dot_product_attention`!
