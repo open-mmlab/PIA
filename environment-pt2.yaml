@@ -9,6 +9,8 @@ dependencies:
   - pytorch-cuda=11.8
   - pip
   - pip:
+    - moviepy
+    - opencv-python
     - diffusers==0.24.0
     - transformers==4.25.1
     - xformers
