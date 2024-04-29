@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2023, Haofan Wang, Qixun Wang, All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Conversion script for the LoRA's safetensors checkpoints. """
+"""Conversion script for the LoRA's safetensors checkpoints."""
 
 import argparse
 
 import torch
-from safetensors.torch import load_file
 
-from diffusers import StableDiffusionPipeline
-import pdb
 
 def convert_lora(pipeline, state_dict, LORA_PREFIX_UNET="lora_unet", LORA_PREFIX_TEXT_ENCODER="lora_te", alpha=0.6):
     # load base model
@@ -75,7 +71,9 @@ def convert_lora(pipeline, state_dict, LORA_PREFIX_UNET="lora_unet", LORA_PREFIX
         if len(state_dict[pair_keys[0]].shape) == 4:
             weight_up = state_dict[pair_keys[0]].squeeze(3).squeeze(2).to(torch.float32)
             weight_down = state_dict[pair_keys[1]].squeeze(3).squeeze(2).to(torch.float32)
-            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down).unsqueeze(2).unsqueeze(3).to(curr_layer.weight.data.device)
+            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down).unsqueeze(2).unsqueeze(3).to(
+                curr_layer.weight.data.device
+            )
         else:
             weight_up = state_dict[pair_keys[0]].to(torch.float32)
             weight_down = state_dict[pair_keys[1]].to(torch.float32)
@@ -88,9 +86,10 @@ def convert_lora(pipeline, state_dict, LORA_PREFIX_UNET="lora_unet", LORA_PREFIX
     return pipeline
 
 
-def convert_lora_model_level(state_dict, unet, text_encoder=None, LORA_PREFIX_UNET="lora_unet", LORA_PREFIX_TEXT_ENCODER="lora_te", alpha=0.6):
-    """convert lora in model level instead of pipeline leval
-    """
+def convert_lora_model_level(
+    state_dict, unet, text_encoder=None, LORA_PREFIX_UNET="lora_unet", LORA_PREFIX_TEXT_ENCODER="lora_te", alpha=0.6
+):
+    """convert lora in model level instead of pipeline leval"""
 
     visited = []
 
@@ -105,8 +104,7 @@ def convert_lora_model_level(state_dict, unet, text_encoder=None, LORA_PREFIX_UN
 
         if "text" in key:
             layer_infos = key.split(".")[0].split(LORA_PREFIX_TEXT_ENCODER + "_")[-1].split("_")
-            assert text_encoder is not None, (
-                'text_encoder must be passed since lora contains text encoder layers')
+            assert text_encoder is not None, "text_encoder must be passed since lora contains text encoder layers"
             curr_layer = text_encoder
         else:
             layer_infos = key.split(".")[0].split(LORA_PREFIX_UNET + "_")[-1].split("_")
@@ -136,8 +134,8 @@ def convert_lora_model_level(state_dict, unet, text_encoder=None, LORA_PREFIX_UN
             pair_keys.append(key.replace("lora_up", "lora_down"))
 
         # update weight
-        # NOTE: load lycon, meybe have bugs :(
-        if 'conv_in' in pair_keys[0]:
+        # NOTE: load lycon, maybe have bugs :(
+        if "conv_in" in pair_keys[0]:
             weight_up = state_dict[pair_keys[0]].to(torch.float32)
             weight_down = state_dict[pair_keys[1]].to(torch.float32)
             weight_up = weight_up.view(weight_up.size(0), -1)
@@ -145,7 +143,7 @@ def convert_lora_model_level(state_dict, unet, text_encoder=None, LORA_PREFIX_UN
             shape = [e for e in curr_layer.weight.data.shape]
             shape[1] = 4
             curr_layer.weight.data[:, :4, ...] += alpha * (weight_up @ weight_down).view(*shape)
-        elif 'conv' in pair_keys[0]:
+        elif "conv" in pair_keys[0]:
             weight_up = state_dict[pair_keys[0]].to(torch.float32)
             weight_down = state_dict[pair_keys[1]].to(torch.float32)
             weight_up = weight_up.view(weight_up.size(0), -1)
@@ -155,7 +153,9 @@ def convert_lora_model_level(state_dict, unet, text_encoder=None, LORA_PREFIX_UN
         elif len(state_dict[pair_keys[0]].shape) == 4:
             weight_up = state_dict[pair_keys[0]].squeeze(3).squeeze(2).to(torch.float32)
             weight_down = state_dict[pair_keys[1]].squeeze(3).squeeze(2).to(torch.float32)
-            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down).unsqueeze(2).unsqueeze(3).to(curr_layer.weight.data.device)
+            curr_layer.weight.data += alpha * torch.mm(weight_up, weight_down).unsqueeze(2).unsqueeze(3).to(
+                curr_layer.weight.data.device
+            )
         else:
             weight_up = state_dict[pair_keys[0]].to(torch.float32)
             weight_down = state_dict[pair_keys[1]].to(torch.float32)

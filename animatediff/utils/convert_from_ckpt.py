@@ -1,4 +1,3 @@
-# coding=utf-8
 # Copyright 2023 The HuggingFace Inc. team.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,42 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Conversion script for the Stable Diffusion checkpoints."""
+"""Conversion script for the Stable Diffusion checkpoints."""
 
 import re
-from io import BytesIO
 from typing import Optional
 
-import requests
 import torch
 from transformers import (
-    AutoFeatureExtractor,
-    BertTokenizerFast,
     CLIPImageProcessor,
     CLIPTextModel,
-    CLIPTextModelWithProjection,
-    CLIPTokenizer,
     CLIPVisionConfig,
     CLIPVisionModelWithProjection,
 )
 
-from diffusers.models import (
-    AutoencoderKL,
-    PriorTransformer,
-    UNet2DConditionModel,
-)
 from diffusers.schedulers import (
     DDIMScheduler,
     DDPMScheduler,
-    DPMSolverMultistepScheduler,
-    EulerAncestralDiscreteScheduler,
-    EulerDiscreteScheduler,
-    HeunDiscreteScheduler,
-    LMSDiscreteScheduler,
-    PNDMScheduler,
-    UnCLIPScheduler,
 )
-from diffusers.utils.import_utils import BACKENDS_MAPPING
 
 
 def shave_segments(path, n_shave_prefix_segments=1):
@@ -195,10 +175,10 @@ def assign_to_checkpoint(
         # proj_attn.weight has to be converted from conv 1D to linear
         if "proj_attn.weight" in new_path:
             checkpoint[new_path] = old_checkpoint[path["old"]][:, :, 0]
-        elif 'to_out.0.weight' in new_path:
-            checkpoint[new_path] = old_checkpoint[path['old']].squeeze()
-        elif any([qkv in new_path for qkv in ['to_q', 'to_k', 'to_v']]):
-            checkpoint[new_path] = old_checkpoint[path['old']].squeeze()
+        elif "to_out.0.weight" in new_path:
+            checkpoint[new_path] = old_checkpoint[path["old"]].squeeze()
+        elif any([qkv in new_path for qkv in ["to_q", "to_k", "to_v"]]):
+            checkpoint[new_path] = old_checkpoint[path["old"]].squeeze()
         else:
             checkpoint[new_path] = old_checkpoint[path["old"]]
 
@@ -319,7 +299,7 @@ def create_diffusers_schedular(original_config):
 
 
 def create_ldm_bert_config(original_config):
-    bert_params = original_config.model.parms.cond_stage_config.params
+    bert_params = original_config.model.params.cond_stage_config.params
     config = LDMBertConfig(
         d_model=bert_params.n_embed,
         encoder_layers=bert_params.n_layer,
@@ -665,9 +645,11 @@ def convert_ldm_vae_checkpoint(checkpoint, config, only_decoder=False, only_enco
     conv_attn_to_linear(new_checkpoint)
 
     if only_decoder:
-        new_checkpoint = {k: v for k, v in new_checkpoint.items() if k.startswith('decoder') or k.startswith('post_quant')}
+        new_checkpoint = {
+            k: v for k, v in new_checkpoint.items() if k.startswith("decoder") or k.startswith("post_quant")
+        }
     elif only_encoder:
-        new_checkpoint = {k: v for k, v in new_checkpoint.items() if k.startswith('encoder') or k.startswith('quant')}
+        new_checkpoint = {k: v for k, v in new_checkpoint.items() if k.startswith("encoder") or k.startswith("quant")}
 
     return new_checkpoint
 

@@ -9,12 +9,13 @@ from glob import glob
 import gradio as gr
 import numpy as np
 import torch
-from diffusers import DDIMScheduler, EulerDiscreteScheduler, PNDMScheduler
 from omegaconf import OmegaConf
 from PIL import Image
 
 from animatediff.pipelines import I2VPipeline
 from animatediff.utils.util import save_videos_grid
+from diffusers import DDIMScheduler, EulerDiscreteScheduler, PNDMScheduler
+
 
 sample_idx = 0
 scheduler_dict = {
@@ -33,27 +34,28 @@ css = """
 """
 
 parser = ArgumentParser()
-parser.add_argument('--config', type=str, default='example/config/base.yaml')
-parser.add_argument('--server-name', type=str, default='0.0.0.0')
-parser.add_argument('--port', type=int, default=7860)
-parser.add_argument('--share', action='store_true')
+parser.add_argument("--config", type=str, default="example/config/base.yaml")
+parser.add_argument("--server-name", type=str, default="0.0.0.0")
+parser.add_argument("--port", type=int, default=7860)
+parser.add_argument("--share", action="store_true")
 
-parser.add_argument('--save-path', default='samples')
+parser.add_argument("--save-path", default="samples")
 
 args = parser.parse_args()
 
 
-N_PROMPT = ('wrong white balance, dark, sketches,worst quality,low quality, '
-            'deformed, distorted, disfigured, bad eyes, wrong lips, '
-            'weird mouth, bad teeth, mutated hands and fingers, bad anatomy,'
-            'wrong anatomy, amputation, extra limb, missing limb, '
-            'floating,limbs, disconnected limbs, mutation, ugly, disgusting, '
-            'bad_pictures, negative_hand-neg')
+N_PROMPT = (
+    "wrong white balance, dark, sketches,worst quality,low quality, "
+    "deformed, distorted, disfigured, bad eyes, wrong lips, "
+    "weird mouth, bad teeth, mutated hands and fingers, bad anatomy,"
+    "wrong anatomy, amputation, extra limb, missing limb, "
+    "floating,limbs, disconnected limbs, mutation, ugly, disgusting, "
+    "bad_pictures, negative_hand-neg"
+)
 
 
 def preprocess_img(img_np, max_size: int = 512):
-
-    ori_image = Image.fromarray(img_np).convert('RGB')
+    ori_image = Image.fromarray(img_np).convert("RGB")
 
     width, height = ori_image.size
 
@@ -81,15 +83,11 @@ def preprocess_img(img_np, max_size: int = 512):
 
 class AnimateController:
     def __init__(self):
-
         # config dirs
         self.basedir = os.getcwd()
-        self.personalized_model_dir = os.path.join(
-            self.basedir, "models", "DreamBooth_LoRA")
-        self.ip_adapter_dir = os.path.join(
-            self.basedir, "models", "IP_Adapter")
-        self.savedir = os.path.join(
-            self.basedir, args.save_path, datetime.now().strftime("Gradio-%Y-%m-%dT%H-%M-%S"))
+        self.personalized_model_dir = os.path.join(self.basedir, "models", "DreamBooth_LoRA")
+        self.ip_adapter_dir = os.path.join(self.basedir, "models", "IP_Adapter")
+        self.savedir = os.path.join(self.basedir, args.save_path, datetime.now().strftime("Gradio-%Y-%m-%dT%H-%M-%S"))
         self.savedir_sample = os.path.join(self.savedir, "sample")
         os.makedirs(self.savedir, exist_ok=True)
 
@@ -107,49 +105,41 @@ class AnimateController:
         self.loaded = False
 
     def refresh_personalized_model(self):
-        personalized_model_list = glob(os.path.join(
-            self.personalized_model_dir, "*.safetensors"))
-        self.personalized_model_list = [
-            os.path.basename(p) for p in personalized_model_list]
+        personalized_model_list = glob(os.path.join(self.personalized_model_dir, "*.safetensors"))
+        self.personalized_model_list = [os.path.basename(p) for p in personalized_model_list]
 
     def get_ip_apdater_folder(self):
         file_list = os.listdir(self.ip_adapter_dir)
         if not file_list:
             return False
 
-        if not 'ip-adapter_sd15.bin' not in file_list:
-            print('Cannot find "ip-adapter_sd15.bin" '
-                  f'under {self.ip_adapter_dir}')
+        if not "ip-adapter_sd15.bin" not in file_list:
+            print('Cannot find "ip-adapter_sd15.bin" ' f"under {self.ip_adapter_dir}")
             return False
-        if not 'image_encoder' not in file_list:
+        if not "image_encoder" not in file_list:
             print(f'Cannot find "image_encoder" under {self.ip_adapter_dir}')
             return False
 
         return True
 
-    def load_model(self,
-                   dreambooth_path=None,
-                   lora_path=None,
-                   lora_alpha=1.0,
-                   enable_ip_adapter=True):
-        gr.Info('Start Load Models...')
-        print('Start Load Models...')
+    def load_model(self, dreambooth_path=None, lora_path=None, lora_alpha=1.0, enable_ip_adapter=True):
+        gr.Info("Start Load Models...")
+        print("Start Load Models...")
 
-        if lora_path and lora_path.upper() != 'NONE':
+        if lora_path and lora_path.upper() != "NONE":
             lora_path = osp.join(self.personalized_model_dir, lora_path)
         else:
             lora_path = None
 
-        if dreambooth_path and dreambooth_path.upper() != 'NONE':
-            dreambooth_path = osp.join(
-                self.personalized_model_dir, dreambooth_path)
+        if dreambooth_path and dreambooth_path.upper() != "NONE":
+            dreambooth_path = osp.join(self.personalized_model_dir, dreambooth_path)
         else:
             dreambooth_path = None
 
         if enable_ip_adapter:
             if not self.get_ip_apdater_folder():
-                print('Load IP-Adapter from remote.')
-                ip_adapter_path = 'h94/IP-Adapter'
+                print("Load IP-Adapter from remote.")
+                ip_adapter_path = "h94/IP-Adapter"
             else:
                 ip_adapter_path = self.ip_adapter_dir
         else:
@@ -162,12 +152,13 @@ class AnimateController:
             dreambooth_path=dreambooth_path,
             lora_path=lora_path,
             lora_alpha=lora_alpha,
-            ip_adapter_path=ip_adapter_path)
-        gr.Info('Load Finish!')
-        print('Load Finish!')
+            ip_adapter_path=ip_adapter_path,
+        )
+        gr.Info("Load Finish!")
+        print("Load Finish!")
         self.loaded = True
 
-        return 'Load'
+        return "Load"
 
     def animate(
         self,
@@ -185,7 +176,7 @@ class AnimateController:
         progress=gr.Progress(),
     ):
         if not self.loaded:
-            raise gr.Error(f"Please load model first!")
+            raise gr.Error("Please load model first!")
 
         if seed_textbox != -1 and seed_textbox != "":
             torch.manual_seed(int(seed_textbox))
@@ -207,8 +198,7 @@ class AnimateController:
             progress_fn=progress,
         ).videos
 
-        save_sample_path = os.path.join(
-            self.savedir_sample, f"{sample_idx}.mp4")
+        save_sample_path = os.path.join(self.savedir_sample, f"{sample_idx}.mp4")
         save_videos_grid(sample, save_sample_path)
 
         sample_config = {
@@ -255,7 +245,6 @@ def ui():
                 """
             )
             with gr.Row():
-
                 base_model_dropdown = gr.Dropdown(
                     label="Select base Dreambooth model",
                     choices=["none"] + controller.personalized_model_list,
@@ -270,22 +259,19 @@ def ui():
                     interactive=True,
                 )
 
-                lora_alpha_slider = gr.Slider(
-                    label="LoRA alpha", value=0, minimum=0, maximum=2, interactive=True)
+                lora_alpha_slider = gr.Slider(label="LoRA alpha", value=0, minimum=0, maximum=2, interactive=True)
 
-                personalized_refresh_button = gr.Button(
-                    value="\U0001F503", elem_classes="toolbutton")
+                personalized_refresh_button = gr.Button(value="\U0001f503", elem_classes="toolbutton")
 
                 def update_personalized_model():
                     controller.refresh_personalized_model()
-                    return [
-                        controller.personalized_model_list,
-                        ["none"] + controller.personalized_model_list
-                    ]
-                personalized_refresh_button.click(fn=update_personalized_model, inputs=[], outputs=[
-                                                  base_model_dropdown, lora_model_dropdown])
+                    return [controller.personalized_model_list, ["none"] + controller.personalized_model_list]
 
-            load_model_button = gr.Button(value='Load')
+                personalized_refresh_button.click(
+                    fn=update_personalized_model, inputs=[], outputs=[base_model_dropdown, lora_model_dropdown]
+                )
+
+            load_model_button = gr.Button(value="Load")
             load_model_button.click(
                 fn=controller.load_model,
                 inputs=[
@@ -293,7 +279,8 @@ def ui():
                     lora_model_dropdown,
                     lora_alpha_slider,
                 ],
-                outputs=[load_model_button])
+                outputs=[load_model_button],
+            )
 
         with gr.Column(variant="panel"):
             gr.Markdown(
@@ -303,73 +290,66 @@ def ui():
             )
 
             prompt_textbox = gr.Textbox(label="Prompt", lines=2)
-            negative_prompt_textbox = gr.Textbox(
-                value=N_PROMPT,
-                label="Negative prompt", lines=1)
+            negative_prompt_textbox = gr.Textbox(value=N_PROMPT, label="Negative prompt", lines=1)
 
             with gr.Row(equal_height=False):
                 with gr.Column():
                     with gr.Row():
-                        init_img = gr.Image(label='Input Image')
+                        init_img = gr.Image(label="Input Image")
 
                     with gr.Row():
-                        sampler_dropdown = gr.Dropdown(label="Sampling method", choices=list(
-                            scheduler_dict.keys()), value=list(scheduler_dict.keys())[0])
+                        sampler_dropdown = gr.Dropdown(
+                            label="Sampling method",
+                            choices=list(scheduler_dict.keys()),
+                            value=list(scheduler_dict.keys())[0],
+                        )
                         sample_step_slider = gr.Slider(
-                            label="Sampling steps", value=25, minimum=10, maximum=100, step=1)
+                            label="Sampling steps", value=25, minimum=10, maximum=100, step=1
+                        )
 
                     max_size_slider = gr.Slider(
-                        label='Max size (The long edge of the input image will be resized to this value, larger value means slower inference speed)',
-                        value=512, step=64, minimum=512, maximum=1024)
+                        label="Max size (The long edge of the input image will be resized to this value, larger value means slower inference speed)",
+                        value=512,
+                        step=64,
+                        minimum=512,
+                        maximum=1024,
+                    )
 
-                    length_slider = gr.Slider(
-                        label="Animation length", value=16, minimum=8, maximum=24, step=1)
-                    cfg_scale_slider = gr.Slider(
-                        label="CFG Scale", value=7.5, minimum=0, maximum=20)
+                    length_slider = gr.Slider(label="Animation length", value=16, minimum=8, maximum=24, step=1)
+                    cfg_scale_slider = gr.Slider(label="CFG Scale", value=7.5, minimum=0, maximum=20)
                     motion_scale_silder = gr.Slider(
-                        label='Motion Scale', value=motion_idx.value, step=1, minimum=0, maximum=2)
-                    ip_adapter_scale = gr.Slider(
-                        label='IP-Apdater Scale', value=0.0, minimum=0, maximum=1)
+                        label="Motion Scale", value=motion_idx.value, step=1, minimum=0, maximum=2
+                    )
+                    ip_adapter_scale = gr.Slider(label="IP-Apdater Scale", value=0.0, minimum=0, maximum=1)
 
                     def GenerationMode(motion_scale_silder, option):
-                        if option == 'Animation':
+                        if option == "Animation":
                             motion_idx = motion_scale_silder
-                        elif option == 'Style Transfer':
+                        elif option == "Style Transfer":
                             motion_idx = motion_scale_silder * -1 - 1
-                        elif option == 'Loop Video':
+                        elif option == "Loop Video":
                             motion_idx = motion_scale_silder + 3
                         return motion_idx
 
                     with gr.Row():
                         style_selection = gr.Radio(
-                            ['Animation', 'Style Transfer', 'Loop Video'],
-                            label='Generation Mode', value='Animation')
+                            ["Animation", "Style Transfer", "Loop Video"], label="Generation Mode", value="Animation"
+                        )
                         style_selection.change(
-                            fn=GenerationMode,
-                            inputs=[motion_scale_silder, style_selection],
-                            outputs=[motion_idx]
+                            fn=GenerationMode, inputs=[motion_scale_silder, style_selection], outputs=[motion_idx]
                         )
                         motion_scale_silder.change(
-                            fn=GenerationMode,
-                            inputs=[motion_scale_silder, style_selection],
-                            outputs=[motion_idx]
+                            fn=GenerationMode, inputs=[motion_scale_silder, style_selection], outputs=[motion_idx]
                         )
 
                     with gr.Row():
                         seed_textbox = gr.Textbox(label="Seed", value=-1)
-                        seed_button = gr.Button(
-                            value="\U0001F3B2", elem_classes="toolbutton")
-                    seed_button.click(
-                        fn=lambda x: random.randint(1, 1e8),
-                        outputs=[seed_textbox],
-                        queue=False
-                    )
+                        seed_button = gr.Button(value="\U0001f3b2", elem_classes="toolbutton")
+                    seed_button.click(fn=lambda x: random.randint(1, 1e8), outputs=[seed_textbox], queue=False)
 
-                    generate_button = gr.Button(
-                        value="Generate", variant='primary')
+                    generate_button = gr.Button(value="Generate", variant="primary")
 
-                result_video = gr.Video(
-                    label="Generated Animation", interactive=False)
+                result_video = gr.Video(label="Generated Animation", interactive=False)
 
             generate_button.click(
                 fn=controller.animate,
@@ -384,9 +364,9 @@ def ui():
                     cfg_scale_slider,
                     seed_textbox,
                     ip_adapter_scale,
-                    max_size_slider
+                    max_size_slider,
                 ],
-                outputs=[result_video]
+                outputs=[result_video],
             )
 
     return demo
@@ -395,5 +375,4 @@ def ui():
 if __name__ == "__main__":
     demo = ui()
     demo.queue(3)
-    demo.launch(server_name=args.server_name,
-                server_port=args.port, share=args.share, allowed_paths=['pia.png'])
+    demo.launch(server_name=args.server_name, server_port=args.port, share=args.share, allowed_paths=["pia.png"])

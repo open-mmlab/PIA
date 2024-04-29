@@ -3,7 +3,7 @@ prompts:
 - - 1girl is smiling, lowres,watermark
   - 1girl is crying, lowres,watermark
   - 1girl, snowing dark night
-n_prompt: 
+n_prompt:
   - 'wrong white balance, dark, sketches,worst quality,low quality, deformed, distorted, disfigured, bad eyes, wrong lips,weird mouth, bad teeth, mutated hands and fingers, bad anatomy,wrong anatomy, amputation, extra limb, missing limb, floating,limbs, disconnected limbs, mutation, ugly, disgusting, bad_pictures, negative_hand-neg'
 validation_data:
   input_name: 'majic_girl'

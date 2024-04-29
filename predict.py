@@ -1,14 +1,13 @@
 # Prediction interface for Cog ⚙️
 # https://github.com/replicate/cog/blob/main/docs/python.md
 
-import os
 import os.path as osp
-from glob import glob
+
 import numpy as np
 import torch
+from cog import BasePredictor, Input, Path
 from omegaconf import OmegaConf
 from PIL import Image
-from cog import BasePredictor, Input, Path
 
 from animatediff.pipelines import I2VPipeline
 from animatediff.utils.util import save_videos_grid
@@ -41,16 +40,12 @@ class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
 
-        self.ip_adapter_dir = (
-            "models/IP_Adapter/h94/IP-Adapter/models"  # cached h94/IP-Adapter
-        )
+        self.ip_adapter_dir = "models/IP_Adapter/h94/IP-Adapter/models"  # cached h94/IP-Adapter
 
         self.inference_config = OmegaConf.load("example/config/base.yaml")
         self.stable_diffusion_dir = self.inference_config.pretrained_model_path
         self.pia_path = self.inference_config.generate.model_path
-        self.style_configs = {
-            k: OmegaConf.load(v) for k, v in STYLE_CONFIG_LIST.items()
-        }
+        self.style_configs = {k: OmegaConf.load(v) for k, v in STYLE_CONFIG_LIST.items()}
         self.pipeline_dict = self.load_model_list()
 
     def load_model_list(self):
@@ -85,9 +80,7 @@ class Predictor(BasePredictor):
         self,
         prompt: str = Input(description="Input prompt."),
         image: Path = Input(description="Input image"),
-        negative_prompt: str = Input(
-            description="Things do not show in the output.", default=N_PROMPT
-        ),
+        negative_prompt: str = Input(description="Things do not show in the output.", default=N_PROMPT),
         style: str = Input(
             description="Choose a style",
             choices=["3d_cartoon", "realistic"],
@@ -105,12 +98,8 @@ class Predictor(BasePredictor):
             le=3,
             default=1,
         ),
-        sampling_steps: int = Input(
-            description="Number of denoising steps", ge=10, le=100, default=25
-        ),
-        animation_length: int = Input(
-            description="Length of the output", ge=8, le=24, default=16
-        ),
+        sampling_steps: int = Input(description="Number of denoising steps", ge=10, le=100, default=25),
+        animation_length: int = Input(description="Length of the output", ge=8, le=24, default=16),
         guidance_scale: float = Input(
             description="Scale for classifier-free guidance",
             ge=1.0,
@@ -123,9 +112,7 @@ class Predictor(BasePredictor):
             le=1.0,
             default=0.0,
         ),
-        seed: int = Input(
-            description="Random seed. Leave blank to randomize the seed", default=None
-        ),
+        seed: int = Input(description="Random seed. Leave blank to randomize the seed", default=None),
     ) -> Path:
         """Run a single prediction on the model"""
         if seed is None:

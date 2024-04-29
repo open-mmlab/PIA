@@ -1,23 +1,19 @@
 # Adapted from https://github.com/showlab/Tune-A-Video/blob/main/tuneavideo/pipelines/pipeline_tuneavideo.py
 
 import inspect
-from typing import Callable, List, Optional, Union
 from dataclasses import dataclass
-import random
-import argparse
+from typing import Callable, List, Optional, Union
 
 import numpy as np
 import torch
-from tqdm import tqdm
-from omegaconf import OmegaConf
-
-from diffusers.utils import is_accelerate_available
+from einops import rearrange
 from packaging import version
+from PIL import Image
+from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
-import os
-from safetensors import safe_open
-
+from animatediff.models.unet import UNet3DConditionModel
+from animatediff.utils.util import prepare_mask_coef
 from diffusers.configuration_utils import FrozenDict
 from diffusers.models import AutoencoderKL
 from diffusers.pipelines import DiffusionPipeline
@@ -29,27 +25,18 @@ from diffusers.schedulers import (
     LMSDiscreteScheduler,
     PNDMScheduler,
 )
-from diffusers.utils import deprecate, logging, BaseOutput
+from diffusers.utils import BaseOutput, deprecate, is_accelerate_available, logging
 
-from einops import rearrange
-
-from animatediff.models.unet import UNet3DConditionModel
-
-from animatediff.utils.convert_from_ckpt import convert_ldm_unet_checkpoint, convert_ldm_clip_checkpoint, convert_ldm_vae_checkpoint
-from animatediff.utils.convert_lora_safetensor_to_diffusers import convert_lora
-
-from animatediff.utils.util import prepare_mask_coef, save_videos_grid
-from animatediff.models.resnet import InflatedConv3d
-
-from PIL import Image
 
 PIL_INTERPOLATION = {
-        "linear": Image.Resampling.BILINEAR,
-        "bilinear": Image.Resampling.BILINEAR,
-        "bicubic": Image.Resampling.BICUBIC,
-        "lanczos": Image.Resampling.LANCZOS,
-        "nearest": Image.Resampling.NEAREST,
-    }
+    "linear": Image.Resampling.BILINEAR,
+    "bilinear": Image.Resampling.BILINEAR,
+    "bicubic": Image.Resampling.BICUBIC,
+    "lanczos": Image.Resampling.LANCZOS,
+    "nearest": Image.Resampling.NEAREST,
+}
+
+
 def preprocess_image(image):
     if isinstance(image, torch.Tensor):
         return image
@@ -176,7 +163,6 @@ class ValidationPipeline(DiffusionPipeline):
             if cpu_offloaded_model is not None:
                 cpu_offload(cpu_offloaded_model, device)
 
-
     @property
     def _execution_device(self):
         if self.device != torch.device("meta") or not hasattr(self.unet, "_hf_hook"):
@@ -286,7 +272,7 @@ class ValidationPipeline(DiffusionPipeline):
         # video = self.vae.decode(latents).sample
         video = []
         for frame_idx in tqdm(range(latents.shape[0])):
-            video.append(self.vae.decode(latents[frame_idx:frame_idx+1]).sample)
+            video.append(self.vae.decode(latents[frame_idx : frame_idx + 1]).sample)
         video = torch.cat(video)
         video = rearrange(video, "(b f) c h w -> b c f h w", f=video_length)
         video = (video / 2 + 0.5).clamp(0, 1)
@@ -326,8 +312,16 @@ class ValidationPipeline(DiffusionPipeline):
                 f" {type(callback_steps)}."
             )
 
-    def prepare_latents(self, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator, latents=None):
-        shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+    def prepare_latents(
+        self, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator, latents=None
+    ):
+        shape = (
+            batch_size,
+            num_channels_latents,
+            video_length,
+            height // self.vae_scale_factor,
+            width // self.vae_scale_factor,
+        )
 
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
@@ -425,10 +419,16 @@ class ValidationPipeline(DiffusionPipeline):
         )
         latents_dtype = latents.dtype
 
-        if use_image != False:
-            shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+        if use_image:
+            shape = (
+                batch_size,
+                num_channels_latents,
+                video_length,
+                height // self.vae_scale_factor,
+                width // self.vae_scale_factor,
+            )
 
-            image = Image.open(f'test_image/init_image{use_image}.png').convert('RGB')
+            image = Image.open(f"test_image/init_image{use_image}.png").convert("RGB")
             image = preprocess_image(image).to(device)
             if isinstance(generator, list):
                 image_latent = [
@@ -438,22 +438,28 @@ class ValidationPipeline(DiffusionPipeline):
             else:
                 image_latent = self.vae.encode(image).latent_dist.sample(generator).to(device=device)
 
-            image_latent         = torch.nn.functional.interpolate(image_latent, size=[shape[-2], shape[-1]])
+            image_latent = torch.nn.functional.interpolate(image_latent, size=[shape[-2], shape[-1]])
             image_latent_padding = image_latent.clone() * 0.18215
-            mask                 = torch.zeros((shape[0], 1, shape[2], shape[3], shape[4])).to(device)
-            mask_coef            = prepare_mask_coef(video_length, 0, kwargs['mask_sim_range'])
+            mask = torch.zeros((shape[0], 1, shape[2], shape[3], shape[4])).to(device)
+            mask_coef = prepare_mask_coef(video_length, 0, kwargs["mask_sim_range"])
 
             add_noise = torch.randn(shape).to(device)
             masked_image = torch.zeros(shape).to(device)
             for f in range(video_length):
-                mask[:,:,f,:,:]         = mask_coef[f]
-                masked_image[:,:,f,:,:] = image_latent_padding.clone()
-            mask         = mask.to(device)
+                mask[:, :, f, :, :] = mask_coef[f]
+                masked_image[:, :, f, :, :] = image_latent_padding.clone()
+            mask = mask.to(device)
         else:
-            shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
-            add_noise    = torch.zeros_like(latents).to(device)
+            shape = (
+                batch_size,
+                num_channels_latents,
+                video_length,
+                height // self.vae_scale_factor,
+                width // self.vae_scale_factor,
+            )
+            add_noise = torch.zeros_like(latents).to(device)
             masked_image = add_noise
-            mask         = torch.zeros((shape[0], 1, shape[2], shape[3], shape[4])).to(device)
+            mask = torch.zeros((shape[0], 1, shape[2], shape[3], shape[4])).to(device)
 
         # Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
@@ -468,7 +474,9 @@ class ValidationPipeline(DiffusionPipeline):
                 latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
 
                 # predict the noise residual
-                noise_pred = self.unet(latent_model_input, mask, masked_image, t, encoder_hidden_states=text_embeddings).sample.to(dtype=latents_dtype)
+                noise_pred = self.unet(
+                    latent_model_input, mask, masked_image, t, encoder_hidden_states=text_embeddings
+                ).sample.to(dtype=latents_dtype)
                 # noise_pred = []
                 # import pdb
                 # pdb.set_trace()

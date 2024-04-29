@@ -6,43 +6,49 @@ from typing import Callable, List, Optional, Union
 
 import numpy as np
 import torch
-from diffusers.configuration_utils import FrozenDict
-from diffusers.loaders import IPAdapterMixin, TextualInversionLoaderMixin
-from diffusers.models import AutoencoderKL
-from diffusers.pipelines import DiffusionPipeline
-from diffusers.schedulers import (DDIMScheduler, DPMSolverMultistepScheduler,
-                                  EulerAncestralDiscreteScheduler,
-                                  EulerDiscreteScheduler, LMSDiscreteScheduler,
-                                  PNDMScheduler)
-from diffusers.utils import (BaseOutput, deprecate, is_accelerate_available,
-                             logging)
-from diffusers.utils.import_utils import is_xformers_available
 from einops import rearrange
 from omegaconf import OmegaConf
 from packaging import version
 from safetensors import safe_open
 from tqdm import tqdm
-from transformers import (CLIPImageProcessor, CLIPTextModel, CLIPTokenizer,
-                          CLIPVisionModelWithProjection)
+from transformers import CLIPImageProcessor, CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjection
 
 from animatediff.models.resnet import InflatedConv3d
 from animatediff.models.unet import UNet3DConditionModel
-from animatediff.utils.convert_from_ckpt import (convert_ldm_clip_checkpoint,
-                                                 convert_ldm_unet_checkpoint,
-                                                 convert_ldm_vae_checkpoint)
-from animatediff.utils.convert_lora_safetensor_to_diffusers import \
-    convert_lora_model_level
+from animatediff.utils.convert_from_ckpt import (
+    convert_ldm_clip_checkpoint,
+    convert_ldm_unet_checkpoint,
+    convert_ldm_vae_checkpoint,
+)
+from animatediff.utils.convert_lora_safetensor_to_diffusers import convert_lora_model_level
 from animatediff.utils.util import prepare_mask_coef_by_statistics
+from diffusers.configuration_utils import FrozenDict
+from diffusers.loaders import IPAdapterMixin, TextualInversionLoaderMixin
+from diffusers.models import AutoencoderKL
+from diffusers.pipelines import DiffusionPipeline
+from diffusers.schedulers import (
+    DDIMScheduler,
+    DPMSolverMultistepScheduler,
+    EulerAncestralDiscreteScheduler,
+    EulerDiscreteScheduler,
+    LMSDiscreteScheduler,
+    PNDMScheduler,
+)
+from diffusers.utils import BaseOutput, deprecate, is_accelerate_available, logging
+from diffusers.utils.import_utils import is_xformers_available
+
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 
-DEFAULT_N_PROMPT = ('wrong white balance, dark, sketches,worst quality,'
-                    'low quality, deformed, distorted, disfigured, bad eyes, '
-                    'wrong lips,weird mouth, bad teeth, mutated hands and fingers, '
-                    'bad anatomy,wrong anatomy, amputation, extra limb, '
-                    'missing limb, floating,limbs, disconnected limbs, mutation, '
-                    'ugly, disgusting, bad_pictures, negative_hand-neg')
+DEFAULT_N_PROMPT = (
+    "wrong white balance, dark, sketches,worst quality,"
+    "low quality, deformed, distorted, disfigured, bad eyes, "
+    "wrong lips,weird mouth, bad teeth, mutated hands and fingers, "
+    "bad anatomy,wrong anatomy, amputation, extra limb, "
+    "missing limb, floating,limbs, disconnected limbs, mutation, "
+    "ugly, disgusting, bad_pictures, negative_hand-neg"
+)
 
 
 @dataclass
@@ -135,18 +141,20 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         self.use_ip_adapter = False
 
     @classmethod
-    def build_pipeline(cls,
-                       base_cfg,
-                       base_model: str,
-                       unet_path: str,
-                       dreambooth_path: Optional[str] = None,
-                       lora_path: Optional[str] = None,
-                       lora_alpha: float = 0,
-                       vae_path: Optional[str] = None,
-                       ip_adapter_path: Optional[str] = None,
-                       ip_adapter_scale: float = 0.0,
-                       only_load_vae_decoder: bool = False,
-                       only_load_vae_encoder: bool = False) -> 'I2VPipeline':
+    def build_pipeline(
+        cls,
+        base_cfg,
+        base_model: str,
+        unet_path: str,
+        dreambooth_path: Optional[str] = None,
+        lora_path: Optional[str] = None,
+        lora_alpha: float = 0,
+        vae_path: Optional[str] = None,
+        ip_adapter_path: Optional[str] = None,
+        ip_adapter_scale: float = 0.0,
+        only_load_vae_decoder: bool = False,
+        only_load_vae_encoder: bool = False,
+    ) -> "I2VPipeline":
         """Method to build pipeline in a faster way~
         Args:
             base_cfg: The config to build model
@@ -158,31 +166,34 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             lora_alpha: value for lora scale
 
             only_load_vae_decoder: Only load VAE decoder from dreambooth / VAE ckpt
-                and maitain encoder as original.
+                and maintain encoder as original.
 
         """
         # build unet
         unet = UNet3DConditionModel.from_pretrained_2d(
-            base_model, subfolder="unet",
-            unet_additional_kwargs=OmegaConf.to_container(
-                base_cfg.unet_additional_kwargs))
+            base_model,
+            subfolder="unet",
+            unet_additional_kwargs=OmegaConf.to_container(base_cfg.unet_additional_kwargs),
+        )
 
         old_weights = unet.conv_in.weight
         old_bias = unet.conv_in.bias
         new_conv1 = InflatedConv3d(
-            9, old_weights.shape[0],
+            9,
+            old_weights.shape[0],
             kernel_size=unet.conv_in.kernel_size,
             stride=unet.conv_in.stride,
             padding=unet.conv_in.padding,
-            bias=True if old_bias is not None else False)
-        param = torch.zeros((320,5,3,3),requires_grad=True)
-        new_conv1.weight = torch.nn.Parameter(torch.cat((old_weights,param),dim=1))
+            bias=True if old_bias is not None else False,
+        )
+        param = torch.zeros((320, 5, 3, 3), requires_grad=True)
+        new_conv1.weight = torch.nn.Parameter(torch.cat((old_weights, param), dim=1))
         if old_bias is not None:
             new_conv1.bias = old_bias
         unet.conv_in = new_conv1
         unet.config["in_channels"] = 9
 
-        unet_ckpt = torch.load(unet_path, map_location='cpu')
+        unet_ckpt = torch.load(unet_path, map_location="cpu")
         unet.load_state_dict(unet_ckpt, strict=False)
         # NOTE: only load temporal layers and condition module
         # for key, value in unet_ckpt.items():
@@ -196,7 +207,6 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         noise_scheduler = DDIMScheduler(**OmegaConf.to_container(base_cfg.noise_scheduler_kwargs))
 
         if dreambooth_path:
-
             print(" >>> Begin loading DreamBooth >>>")
             base_model_state_dict = {}
             with safe_open(dreambooth_path, framework="pt", device="cpu") as f:
@@ -206,21 +216,23 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             # load unet
             converted_unet_checkpoint = convert_ldm_unet_checkpoint(base_model_state_dict, unet.config)
 
-            old_value = converted_unet_checkpoint['conv_in.weight']
-            new_param = unet_ckpt['conv_in.weight'][:,4:,:,:].clone().cpu()
+            old_value = converted_unet_checkpoint["conv_in.weight"]
+            new_param = unet_ckpt["conv_in.weight"][:, 4:, :, :].clone().cpu()
             new_value = torch.nn.Parameter(torch.cat((old_value, new_param), dim=1))
-            converted_unet_checkpoint['conv_in.weight'] = new_value
+            converted_unet_checkpoint["conv_in.weight"] = new_value
             unet.load_state_dict(converted_unet_checkpoint, strict=False)
 
             # load vae
             converted_vae_checkpoint = convert_ldm_vae_checkpoint(
-                base_model_state_dict, vae.config,
+                base_model_state_dict,
+                vae.config,
                 only_decoder=only_load_vae_decoder,
-                only_encoder=only_load_vae_encoder,)
+                only_encoder=only_load_vae_encoder,
+            )
             need_strict = not (only_load_vae_decoder or only_load_vae_encoder)
             vae.load_state_dict(converted_vae_checkpoint, strict=need_strict)
-            print('Prefix in loaded VAE checkpoint: ')
-            print(set([k.split('.')[0] for k in converted_vae_checkpoint.keys()]))
+            print("Prefix in loaded VAE checkpoint: ")
+            print(set([k.split(".")[0] for k in converted_vae_checkpoint.keys()]))
 
             # load text encoder
             text_encoder_checkpoint = convert_ldm_clip_checkpoint(base_model_state_dict)
@@ -230,44 +242,44 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             print(" <<< Loaded DreamBooth        <<<")
 
         if vae_path:
-            print(' >>> Begin loading VAE >>>')
+            print(" >>> Begin loading VAE >>>")
             vae_state_dict = {}
-            if vae_path.endswith('safetensors'):
+            if vae_path.endswith("safetensors"):
                 with safe_open(vae_path, framework="pt", device="cpu") as f:
                     for key in f.keys():
                         vae_state_dict[key] = f.get_tensor(key)
-            elif vae_path.endswith('ckpt') or vae_path.endswith('pt'):
-                vae_state_dict = torch.load(vae_path, map_location='cpu')
-            if 'state_dict' in vae_state_dict:
-                vae_state_dict = vae_state_dict['state_dict']
+            elif vae_path.endswith("ckpt") or vae_path.endswith("pt"):
+                vae_state_dict = torch.load(vae_path, map_location="cpu")
+            if "state_dict" in vae_state_dict:
+                vae_state_dict = vae_state_dict["state_dict"]
 
-            vae_state_dict = {f'first_stage_model.{k}': v for k, v in vae_state_dict.items()}
+            vae_state_dict = {f"first_stage_model.{k}": v for k, v in vae_state_dict.items()}
 
             converted_vae_checkpoint = convert_ldm_vae_checkpoint(
-                vae_state_dict, vae.config,
+                vae_state_dict,
+                vae.config,
                 only_decoder=only_load_vae_decoder,
-                only_encoder=only_load_vae_encoder,)
-            print('Prefix in loaded VAE checkpoint: ')
-            print(set([k.split('.')[0] for k in converted_vae_checkpoint.keys()]))
+                only_encoder=only_load_vae_encoder,
+            )
+            print("Prefix in loaded VAE checkpoint: ")
+            print(set([k.split(".")[0] for k in converted_vae_checkpoint.keys()]))
             need_strict = not (only_load_vae_decoder or only_load_vae_encoder)
             vae.load_state_dict(converted_vae_checkpoint, strict=need_strict)
             print(" <<< Loaded VAE        <<<")
 
         if lora_path:
-
             print(" >>> Begin loading LoRA >>>")
 
             lora_dict = {}
-            with safe_open(lora_path, framework='pt', device='cpu') as file:
+            with safe_open(lora_path, framework="pt", device="cpu") as file:
                 for k in file.keys():
                     lora_dict[k] = file.get_tensor(k)
-            unet, text_encoder = convert_lora_model_level(
-                lora_dict, unet, text_encoder, alpha=lora_alpha)
+            unet, text_encoder = convert_lora_model_level(lora_dict, unet, text_encoder, alpha=lora_alpha)
 
             print(" <<< Loaded LoRA        <<<")
 
         # move model to device
-        device = torch.device('cuda')
+        device = torch.device("cuda")
         unet_dtype = torch.float16
         tenc_dtype = torch.float16
         vae_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float32
@@ -275,31 +287,27 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         unet = unet.to(device=device, dtype=unet_dtype)
         text_encoder = text_encoder.to(device=device, dtype=tenc_dtype)
         vae = vae.to(device=device, dtype=vae_dtype)
-        print(f'Set Unet to {unet_dtype}')
-        print(f'Set text encoder to {tenc_dtype}')
-        print(f'Set vae to {vae_dtype}')
+        print(f"Set Unet to {unet_dtype}")
+        print(f"Set text encoder to {tenc_dtype}")
+        print(f"Set vae to {vae_dtype}")
 
         if is_xformers_available():
             unet.enable_xformers_memory_efficient_attention()
 
-        pipeline = cls(unet=unet,
-                       vae=vae,
-                       tokenizer=tokenizer,
-                       text_encoder=text_encoder,
-                       scheduler=noise_scheduler)
+        pipeline = cls(unet=unet, vae=vae, tokenizer=tokenizer, text_encoder=text_encoder, scheduler=noise_scheduler)
 
         # ip_adapter_path = 'h94/IP-Adapter'
         if ip_adapter_path and ip_adapter_scale > 0:
-            ip_adapter_name = 'ip-adapter_sd15.bin'
+            ip_adapter_name = "ip-adapter_sd15.bin"
             # only online repo need subfolder
             if not osp.isdir(ip_adapter_path):
-                subfolder = 'models'
+                subfolder = "models"
             else:
-                subfolder = ''
+                subfolder = ""
             pipeline.load_ip_adapter(ip_adapter_path, subfolder, ip_adapter_name)
             pipeline.set_ip_adapter_scale(ip_adapter_scale)
             pipeline.use_ip_adapter = True
-            print(f'Load IP-Adapter, scale: {ip_adapter_scale}')
+            print(f"Load IP-Adapter, scale: {ip_adapter_scale}")
 
         # text_inversion_path = './models/TextualInversion/easynegative.safetensors'
         # if text_inversion_path:
@@ -434,7 +442,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         # video = self.vae.decode(latents).sample
         video = []
         for frame_idx in tqdm(range(latents.shape[0])):
-            video.append(self.vae.decode(latents[frame_idx:frame_idx+1]).sample)
+            video.append(self.vae.decode(latents[frame_idx : frame_idx + 1]).sample)
         video = torch.cat(video)
         video = rearrange(video, "(b f) c h w -> b c f h w", f=video_length)
         video = (video / 2 + 0.5).clamp(0, 1)
@@ -483,8 +491,26 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
 
         return timesteps, num_inference_steps - t_start
 
-    def prepare_latents(self, add_noise_time_step, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator, latents=None):
-        shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+    def prepare_latents(
+        self,
+        add_noise_time_step,
+        batch_size,
+        num_channels_latents,
+        video_length,
+        height,
+        width,
+        dtype,
+        device,
+        generator,
+        latents=None,
+    ):
+        shape = (
+            batch_size,
+            num_channels_latents,
+            video_length,
+            height // self.vae_scale_factor,
+            width // self.vae_scale_factor,
+        )
 
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
@@ -547,7 +573,6 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         return_dict: bool = True,
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
-
         cond_frame: int = 0,
         mask_sim_template_idx: int = 0,
         ip_adapter_scale: float = 0,
@@ -559,8 +584,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
         height = height or self.unet.config.sample_size * self.vae_scale_factor
         width = width or self.unet.config.sample_size * self.vae_scale_factor
 
-        assert strength > 0 and strength <= 1, (
-            f'"strength" for img2vid must in (0, 1]. But receive {strength}.')
+        assert strength > 0 and strength <= 1, f'"strength" for img2vid must in (0, 1]. But receive {strength}.'
 
         # Check inputs. Raise error if not correct
         self.check_inputs(prompt, height, width, callback_steps)
@@ -591,7 +615,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
 
         # Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
-        #timesteps = self.scheduler.timesteps
+        # timesteps = self.scheduler.timesteps
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size)
 
@@ -610,12 +634,18 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             latents,
         )
 
-        shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+        shape = (
+            batch_size,
+            num_channels_latents,
+            video_length,
+            height // self.vae_scale_factor,
+            width // self.vae_scale_factor,
+        )
 
         raw_image = image.copy()
         image = torch.from_numpy(image)[None, ...].permute(0, 3, 1, 2)
         image = image / 255  # [0, 1]
-        image = image * 2 - 1   # [-1, 1]
+        image = image * 2 - 1  # [-1, 1]
         image = image.to(device=device, dtype=self.vae.dtype)
 
         if isinstance(generator, list):
@@ -636,8 +666,8 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
 
         masked_image = torch.zeros(shape[0], 4, shape[2], shape[3], shape[4]).to(device=device, dtype=self.unet.dtype)
         for f in range(video_length):
-            mask[:,:,f,:,:]         = mask_coef[f]
-            masked_image[:,:,f,:,:] = image_latent_padding.clone()
+            mask[:, :, f, :, :] = mask_coef[f]
+            masked_image[:, :, f, :, :] = image_latent_padding.clone()
 
         # Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
@@ -653,10 +683,9 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             image_embeds = image_embeds.to(device=device, dtype=self.unet.dtype)
 
             self.set_ip_adapter_scale(ip_adapter_scale)
-            print(f'Set IP-Adapter Scale as {ip_adapter_scale}')
+            print(f"Set IP-Adapter Scale as {ip_adapter_scale}")
 
         else:
-
             image_embeds = None
 
         # prepare for latents if strength < 1, add convert gaussian latent to masked_img and add noise
@@ -685,8 +714,8 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
                 masked_image,
                 t,
                 encoder_hidden_states=text_embeddings,
-                image_embeds=image_embeds
-            )['sample']
+                image_embeds=image_embeds,
+            )["sample"]
 
             # perform guidance
             if do_classifier_free_guidance:

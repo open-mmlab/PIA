@@ -15,7 +15,7 @@
 <a target="_blank" href="https://huggingface.co/spaces/Leoxing/PIA">
   <img src="https://huggingface.co/datasets/huggingface/badges/raw/main/open-in-hf-spaces-sm.svg" alt="Open in HugginFace"/>
 </a>
-[![Replicate](https://replicate.com/cjwbw/pia/badge)](https://replicate.com/cjwbw/pia) 
+[![Replicate](https://replicate.com/cjwbw/pia/badge)](https://replicate.com/cjwbw/pia)
 
 You may also want to try other project from our team:
 <a target="_blank" href="https://github.com/open-mmlab/mmagic">
@@ -57,7 +57,7 @@ conda env create -f environment.yaml
 conda activate pia
 ```
 
-We strongly recommand you to use Pytorch==2.0.0 which supports `scaled_dot_product_attention` for memory-efficient image animation.
+We strongly recommend you to use Pytorch==2.0.0 which supports `scaled_dot_product_attention` for memory-efficient image animation.
 
 ### Download checkpoints
 <li>Download the Stable Diffusion v1-5</li>

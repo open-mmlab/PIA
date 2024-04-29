@@ -3,7 +3,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from einops import rearrange
 
 
@@ -27,7 +26,7 @@ class Upsample3D(nn.Module):
         self.use_conv_transpose = use_conv_transpose
         self.name = name
 
-        conv = None
+        # conv = None
         if use_conv_transpose:
             raise NotImplementedError
         elif use_conv:
@@ -166,7 +165,7 @@ class ResnetBlock3D(nn.Module):
         hidden_states = self.nonlinearity(hidden_states)
 
         hidden_states = self.conv1(hidden_states)
-        
+
         if temb is not None:
             temb = self.time_emb_proj(self.nonlinearity(temb))[:, :, None, None, None]
 
