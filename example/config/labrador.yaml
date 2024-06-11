@@ -15,5 +15,5 @@ generate:
   use_db: true
   global_seed: 4292543217695451000
   lora_path: ""
-  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v20.safetensors"
+  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v10.safetensors"
   lora_alpha: 0.8

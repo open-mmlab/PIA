@@ -2,9 +2,9 @@
 
 [**PIA: Your Personalized Image Animator via Plug-and-Play Modules in Text-to-Image Models**](https://arxiv.org/abs/2312.13964)
 
-[Yiming Zhang†](https://github.com/ymzhang0319), [Zhening Xing†](https://github.com/LeoXing1996/), [Yanhong Zeng](https://zengyh1900.github.io/), [Youqing Fang](https://github.com/FangYouqing), [Kai Chen*](https://chenkai.site/)
+[Yiming Zhang*](https://github.com/ymzhang0319), [Zhening Xing*](https://github.com/LeoXing1996/), [Yanhong Zeng†](https://zengyh1900.github.io/), [Youqing Fang](https://github.com/FangYouqing), [Kai Chen†](https://chenkai.site/)
 
-(*Corresponding Author, †Equal Contribution)
+(*equal contribution, †corresponding Author)
 
 
 [![arXiv](https://img.shields.io/badge/arXiv-2312.13964-b31b1b.svg)](https://arxiv.org/abs/2312.13964)
@@ -63,8 +63,15 @@ We strongly recommend you to use Pytorch==2.0.0 which supports `scaled_dot_produ
 <li>Download the Stable Diffusion v1-5</li>
 
 ```
+conda install git-lfs
 git lfs install
 git clone https://huggingface.co/runwayml/stable-diffusion-v1-5 models/StableDiffusion/
+```
+
+<li>Download PIA</li>
+
+```
+git clone https://huggingface.co/Leoxing/PIA models/PIA/
 ```
 
 <li>Download Personalized Models</li>
@@ -75,14 +82,8 @@ bash download_bashscripts/2-RcnzCartoon.sh
 bash download_bashscripts/3-MajicMix.sh
 ```
 
-<li>Download PIA</li>
 
-```
-bash download_bashscripts/0-PIA.sh
-```
-
-
-You can also download *pia.ckpt* through link on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
+You can also download *pia.ckpt* manually through link on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link)
 or [HuggingFace](https://huggingface.co/Leoxing/PIA).
 
 Put checkpoints as follows:
@@ -106,7 +107,7 @@ python inference.py --config=example/config/lighthouse.yaml
 python inference.py --config=example/config/harry.yaml
 python inference.py --config=example/config/majic_girl.yaml
 ```
-Run the command above, you will get:
+Run the command above, then you can find the results in example/result:
 <table class="center">
     <tr>
       <td><p style="text-align: center">Input Image</p></td>
@@ -115,7 +116,7 @@ Run the command above, you will get:
       <td><p style="text-align: center">fireworks, lighthouse</p></td>
     </tr>
     <tr>
-      <td><img src="__assets__/image_animation/real/lighthouse.jpg"></td>
+      <td><img src="example/img/lighthouse.jpg"></td>
       <td><img src="__assets__/image_animation/real/1.gif"></td>
       <td><img src="__assets__/image_animation/real/2.gif"></td>
       <td><img src="__assets__/image_animation/real/3.gif"></td>
@@ -127,7 +128,7 @@ Run the command above, you will get:
       <td><p style="text-align: center">1boy is waving hands</p></td>
     </tr>
     <tr>
-      <td><img src="__assets__/image_animation/rcnz/harry.png"></td>
+      <td><img src="example/img/harry.png"></td>
       <td><img src="__assets__/image_animation/rcnz/1.gif"></td>
       <td><img src="__assets__/image_animation/rcnz/2.gif"></td>
       <td><img src="__assets__/image_animation/rcnz/3.gif"></td>
@@ -139,7 +140,7 @@ Run the command above, you will get:
       <td><p style="text-align: center">1girl, snowing </p></td>
     </tr>
     <tr>
-      <td><img src="__assets__/image_animation/majic/majic_girl.jpg"></td>
+      <td><img src="example/img/majic_girl.jpg"></td>
       <td><img src="__assets__/image_animation/majic/1.gif"></td>
       <td><img src="__assets__/image_animation/majic/2.gif"></td>
       <td><img src="__assets__/image_animation/majic/3.gif"></td>
@@ -180,19 +181,19 @@ python inference.py --config=example/config/genshin.yaml
       <td><p style="text-align: center">Large Motion</p></td>
     </tr>
     <tr>
-    <td><img src="__assets__/image_animation/magnitude/labrador.png" style="width: 220px">a golden labrador is running</td>
-     <td><img src="__assets__/image_animation/magnitude/1.gif"></td>
-      <td><img src="__assets__/image_animation/magnitude/2.gif"></td>
-      <td><img src="__assets__/image_animation/magnitude/3.gif"></td>
+    <td><img src="example/img/labrador.png" style="width: 220px">a golden labrador is running</td>
+     <td><img src="__assets__/image_animation/magnitude/labrador/1.gif"></td>
+      <td><img src="__assets__/image_animation/magnitude/labrador/2.gif"></td>
+      <td><img src="__assets__/image_animation/magnitude/labrador/3.gif"></td>
     </tr>
     <tr>
-    <td><img src="__assets__/image_animation/magnitude/bear/bear.jpg" style="width: 220px">1bear is walking, ...</td>
+    <td><img src="example/img/bear.jpg" style="width: 220px">1bear is walking, ...</td>
      <td><img src="__assets__/image_animation/magnitude/bear/1.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/bear/2.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/bear/3.gif"></td>
     </tr>
     <tr>
-    <td><img src="__assets__/image_animation/magnitude/genshin/genshin.jpg" style="width: 220px">cherry blossom, ...</td>
+    <td><img src="example/img/genshin.jpg" style="width: 220px">cherry blossom, ...</td>
      <td><img src="__assets__/image_animation/magnitude/genshin/1.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/genshin/2.gif"></td>
       <td><img src="__assets__/image_animation/magnitude/genshin/3.gif"></td>
@@ -206,7 +207,7 @@ Examples:
 
 ```sh
 python inference.py --config example/config/concert.yaml --style_transfer
-python inference.py --config example/config/ania.yaml --style_transfer
+python inference.py --config example/config/anya.yaml --style_transfer
 ```
 <table class="center">
     <tr>
@@ -216,16 +217,16 @@ python inference.py --config example/config/ania.yaml --style_transfer
       <td><p style="text-align: center">1man is singing</p></td>
     </tr>
     <tr>
-      <td style="text-align: center"><img src="__assets__/image_animation/style_transfer/concert.png" style="width:220px">Realistic Vision</td>
-      <td><img src="__assets__/image_animation/style_transfer/1.gif"></td>
-      <td><img src="__assets__/image_animation/style_transfer/2.gif"></td>
-      <td><img src="__assets__/image_animation/style_transfer/3.gif"></td>
+      <td style="text-align: center"><img src="example/img/concert.png" style="width:220px">Realistic Vision</td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/1.gif"></td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/2.gif"></td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/3.gif"></td>
     </tr>
     <tr>
-      <td style="text-align: center"><img src="__assets__/image_animation/style_transfer/concert.png" style="width:220px">RCNZ Cartoon 3d</td>
-      <td><img src="__assets__/image_animation/style_transfer/4.gif"></td>
-      <td><img src="__assets__/image_animation/style_transfer/5.gif"></td>
-      <td><img src="__assets__/image_animation/style_transfer/6.gif"></td>
+      <td style="text-align: center"><img src="example/img/concert.png" style="width:220px">RCNZ Cartoon 3d</td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/4.gif"></td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/5.gif"></td>
+      <td><img src="__assets__/image_animation/style_transfer/concert/6.gif"></td>
     </tr>
     <tr>
       <td><p style="text-align: center"></p></td>
@@ -234,7 +235,7 @@ python inference.py --config example/config/ania.yaml --style_transfer
       <td><p style="text-align: center">1girl is crying, pout</p></td>
     </tr>
     <tr>
-      <td style="text-align: center"><img src="__assets__/image_animation/style_transfer/anya/anya.jpg" style="width:220px">RCNZ Cartoon 3d</td>
+      <td style="text-align: center"><img src="example/img/anya.jpg" style="width:220px">RCNZ Cartoon 3d</td>
       <td><img src="__assets__/image_animation/style_transfer/anya/1.gif"></td>
       <td><img src="__assets__/image_animation/style_transfer/anya/2.gif"></td>
       <td><img src="__assets__/image_animation/style_transfer/anya/3.gif"></td>
@@ -263,7 +264,7 @@ python inference.py --config=example/config/labrador.yaml --loop
     <td><p style="text-align: center">fireworks, lighthouse</p></td>
   </tr>
   <tr>
-    <td style="text-align: center"><img src="__assets__/image_animation/loop/lighthouse/lighthouse.jpg" style="width:auto"></td>
+    <td style="text-align: center"><img src="example/img/lighthouse.jpg" style="width:auto"></td>
     <td><img src="__assets__/image_animation/loop/lighthouse/1.gif"></td>
     <td><img src="__assets__/image_animation/loop/lighthouse/2.gif"></td>
     <td><img src="__assets__/image_animation/loop/lighthouse/3.gif"></td>
@@ -275,7 +276,7 @@ python inference.py --config=example/config/labrador.yaml --loop
     <td><p style="text-align: center">labrador running</p></td>
   </tr>
   <tr>
-    <td style="text-align: center"><img src="__assets__/image_animation/loop/labrador/labrador.png" style="width:auto"></td>
+    <td style="text-align: center"><img src="example/img/labrador.png" style="width:auto"></td>
     <td><img src="__assets__/image_animation/loop/labrador/1.gif"></td>
     <td><img src="__assets__/image_animation/loop/labrador/2.gif"></td>
     <td><img src="__assets__/image_animation/loop/labrador/3.gif"></td>

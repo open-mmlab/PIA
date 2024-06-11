@@ -13,5 +13,5 @@ generate:
   use_db: true
   global_seed: 10201034102130841429
   lora_path: "models/DreamBooth_LoRA/cyberpunk.safetensors"
-  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v20.safetensors"
+  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v10.safetensors"
   lora_alpha: 0.4
