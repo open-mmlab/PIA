@@ -233,7 +233,6 @@ class BasicTransformerBlock(nn.Module):
         # else:
         #     hidden_states = self.attn1(norm_hidden_states, attention_mask=attention_mask, video_length=video_length) + hidden_states
 
-        # pdb.set_trace()
         if self.unet_use_cross_frame_attention:
             hidden_states = (
                 self.attn1(norm_hidden_states, attention_mask=attention_mask, video_length=video_length)

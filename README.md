@@ -99,7 +99,7 @@ Put checkpoints as follows:
         └── ...
 ```
 
-## Usage
+## Inference
 ### Image Animation
 Image to Video result can be obtained by:
 ```
@@ -282,6 +282,19 @@ python inference.py --config=example/config/labrador.yaml --loop
     <td><img src="__assets__/image_animation/loop/labrador/3.gif"></td>
   </tr>
 </table>
+
+
+## Training
+
+We provide [training script]("train.py") for PIA. It borrows from [AnimateDiff](https://github.com/guoyww/AnimateDiff/tree/main) heavily, so please prepare the dataset and configuration files according to the [guideline](https://github.com/guoyww/AnimateDiff/blob/main/__assets__/docs/animatediff.md#steps-for-training).
+
+After preparation, you can train the model by running the following command using torchrun:
+
+```shell
+torchrun --nnodes=1 --nproc_per_node=1 --config example/config/train.yaml
+```
+
+
 
 ## AnimateBench
 We have open-sourced AnimateBench on [HuggingFace](https://huggingface.co/datasets/ymzhang319/AnimateBench) which includes images, prompts and configs to evaluate PIA and other image animation methods.

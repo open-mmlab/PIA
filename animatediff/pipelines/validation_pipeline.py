@@ -1,5 +1,5 @@
 # Adapted from https://github.com/showlab/Tune-A-Video/blob/main/tuneavideo/pipelines/pipeline_tuneavideo.py
-
+import pdb
 import inspect
 from dataclasses import dataclass
 from typing import Callable, List, Optional, Union
@@ -405,7 +405,8 @@ class ValidationPipeline(DiffusionPipeline):
         timesteps = self.scheduler.timesteps
 
         # Prepare latent variables
-        num_channels_latents = self.unet.in_channels
+        num_channels_latents = 4
+        # num_channels_latents = self.unet.in_channels
         latents = self.prepare_latents(
             batch_size * num_videos_per_prompt,
             num_channels_latents,
@@ -477,13 +478,6 @@ class ValidationPipeline(DiffusionPipeline):
                 noise_pred = self.unet(
                     latent_model_input, mask, masked_image, t, encoder_hidden_states=text_embeddings
                 ).sample.to(dtype=latents_dtype)
-                # noise_pred = []
-                # import pdb
-                # pdb.set_trace()
-                # for batch_idx in range(latent_model_input.shape[0]):
-                #     noise_pred_single = self.unet(latent_model_input[batch_idx:batch_idx+1], t, encoder_hidden_states=text_embeddings[batch_idx:batch_idx+1]).sample.to(dtype=latents_dtype)
-                #     noise_pred.append(noise_pred_single)
-                # noise_pred = torch.cat(noise_pred)
 
                 # perform guidance
                 if do_classifier_free_guidance:
