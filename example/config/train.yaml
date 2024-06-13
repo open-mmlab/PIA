@@ -74,7 +74,7 @@ enable_xformers_memory_efficient_attention: True
 
 is_debug: False
 
-# precalculated statics
+# precalculated statistics
 statistic: [[0., 0.],
         [0.3535855, 24.23687346],
         [0.91609545, 30.65091947],

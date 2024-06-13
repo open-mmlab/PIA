@@ -12,7 +12,7 @@ import torch.utils.checkpoint
 
 try:
     from diffusers.models.cross_attention import AttnProcessor
-except:
+except ImportError:
     from diffusers.models.attention_processor import AttnProcessor
 from typing import Dict
 

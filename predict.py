@@ -49,7 +49,7 @@ class Predictor(BasePredictor):
         self.pipeline_dict = self.load_model_list()
 
     def load_model_list(self):
-        pipeline_dict = dict()
+        pipeline_dict = {}
         for style, cfg in self.style_configs.items():
             print(f"Loading {style}")
             dreambooth_path = cfg.get("dreambooth", "none")
