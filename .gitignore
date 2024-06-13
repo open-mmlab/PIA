@@ -20,11 +20,15 @@ batch*
 *.safetensors
 *.zip
 *.csv
+*.log
 
 **/__pycache__/
 samples/
 wandb/
 outputs/
+example/result
+models/StableDiffusion
+models/PIA
 
 !pia.png
 .DS_Store

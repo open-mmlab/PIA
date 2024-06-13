@@ -84,9 +84,9 @@ class WebVid10M(Dataset):
 
         video_dir = os.path.join(self.video_folder, f"{videoid}.mp4")
         video_reader = VideoReader(video_dir)
-        video_length = len(video_reader)
         total_frames = len(video_reader)
-        clip_length = min(video_length, (self.sample_n_frames - 1) * self.sample_stride + 1)
+        # video_length = len(video_reader)
+        # clip_length = min(video_length, (self.sample_n_frames - 1) * self.sample_stride + 1)
         # start_idx = random.randint(0, video_length - clip_length)
         # batch_index = np.linspace(start_idx, start_idx + clip_length - 1, self.sample_n_frames, dtype=int)
 

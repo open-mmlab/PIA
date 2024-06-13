@@ -15,5 +15,5 @@ generate:
   sample_height: 768
   global_seed:  10041042941301238026
   lora_path: "models/DreamBooth_LoRA/genshin.safetensors"
-  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v20.safetensors"
+  db_path: "models/DreamBooth_LoRA/rcnzCartoon3d_v10.safetensors"
   lora_alpha: 0.4

@@ -1,0 +1,93 @@
+image_finetune: false
+
+output_dir: "outputs"
+pretrained_model_path: "./models/StableDiffusion/"
+pretrained_motion_module_path: './models/Motion_Module/mm_sd_v15_v2.ckpt'
+
+
+unet_additional_kwargs:
+  use_motion_module              : true
+  motion_module_resolutions      : [ 1,2,4,8 ]
+  unet_use_cross_frame_attention : false
+  unet_use_temporal_attention    : false
+
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads                : 8
+    num_transformer_block              : 1
+    attention_block_types              : [ "Temporal_Self", "Temporal_Self" ]
+    temporal_position_encoding         : true
+    temporal_position_encoding_max_len : 32
+    temporal_attention_dim_div         : 1
+    zero_initialize                    : true
+
+  mask_sim_range: [0.2, 1.0]
+
+noise_scheduler_kwargs:
+  num_train_timesteps: 1000
+  beta_start:          0.00085
+  beta_end:            0.012
+  beta_schedule:       "linear"
+  steps_offset:        1
+  clip_sample:         false
+
+train_data:
+  csv_path:        "./results_10M_train.csv"
+  sample_size:     256
+  sample_stride:   4
+  sample_n_frames: 16
+
+validation_data:
+  prompts:
+    - "waves, ocean flows, sand, clean sea, breath-taking beautiful beach, tropicaHl beach."
+    - "1girl walking on the street"
+    - "Robot dancing in times square."
+    - "Pacific coast, carmel by the sea ocean and waves."
+  num_inference_steps: 25
+  guidance_scale: 8.
+  mask_sim_range: [0.2, 1.0]
+
+trainable_modules:
+  - 'cond_in.'
+  - 'motion_modules'
+
+# set the path to the finetuned unet's image layers
+# according to
+# https://github.com/guoyww/AnimateDiff/blob/main/__assets__/docs/animatediff.md#training
+unet_checkpoint_path: "models/mm_sd_v15_v2_full.ckpt"
+
+learning_rate:    1.e-4
+train_batch_size: 4
+gradient_accumulation_steps: 16
+
+max_train_epoch:      -1
+max_train_steps:      500000
+checkpointing_epochs: -1
+checkpointing_steps:  60
+
+validation_steps:       3000
+validation_steps_tuple: [2, 50, 1000]
+
+global_seed: 42
+mixed_precision_training: true
+enable_xformers_memory_efficient_attention: True
+
+is_debug: False
+
+# precalculated statistics
+statistic: [[0., 0.],
+        [0.3535855, 24.23687346],
+        [0.91609545, 30.65091947],
+        [1.41165152, 34.40093286],
+        [1.56943881, 36.99639585],
+        [1.73182842, 39.42044163],
+        [1.82733002, 40.94703526],
+        [1.88060527, 42.66233244],
+        [1.96208071, 43.73070788],
+        [2.02723091, 44.25965378],
+        [2.10820894, 45.66120213],
+        [2.21115041, 46.29561324],
+        [2.23412351, 47.08810863],
+        [2.29430165, 47.9515062],
+        [2.32986362, 48.69085638],
+        [2.37310751, 49.19931439]]
