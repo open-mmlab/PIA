@@ -43,14 +43,13 @@ PIA is a personalized image animation method which can generate videos with **hi
 ## Setup
 ### Prepare Environment
 
-Use the following command to install Pytorch==2.0.0 and other dependencies:
+Use the following command to install a conda environment for PIA from scratch:
 
 ```
-conda env create -f environment-pt2.yaml
+conda env create -f pia.yml
 conda activate pia
 ```
-
-If you want to use lower version of Pytorch (e.g. 1.13.1), you can use the following command:
+You may also want to install it based on an existing environment, then you can use `environment-pt2.yaml` for Pytorch==2.0.0. If you want to use lower version of Pytorch (e.g. 1.13.1), you can use the following command:
 
 ```
 conda env create -f environment.yaml
@@ -291,7 +290,7 @@ We provide [training script]("train.py") for PIA. It borrows from [AnimateDiff](
 After preparation, you can train the model by running the following command using torchrun:
 
 ```shell
-torchrun --nnodes=1 --nproc_per_node=1 --config example/config/train.yaml
+torchrun --nnodes=1 --nproc_per_node=1 train.py --config example/config/train.yaml
 ```
 
 
