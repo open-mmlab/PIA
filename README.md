@@ -1,4 +1,4 @@
-# PIA：Personalized Image Animator
+# [CVPR 2024] PIA：Personalized Image Animator
 
 [**PIA: Your Personalized Image Animator via Plug-and-Play Modules in Text-to-Image Models**](https://arxiv.org/abs/2312.13964)
 
@@ -17,28 +17,20 @@
 </a>
 [![Replicate](https://replicate.com/cjwbw/pia/badge)](https://replicate.com/cjwbw/pia)
 
-You may also want to try other project from our team:
-<a target="_blank" href="https://github.com/open-mmlab/mmagic">
-  <img src="https://github.com/open-mmlab/mmagic/assets/28132635/15aab910-f5c4-4b76-af9d-fe8eead1d930" height=20 alt="MMagic"/>
-</a>
 
 PIA is a personalized image animation method which can generate videos with **high motion controllability** and **strong text and image alignment**.
 
+If you find our project helpful, please give it a star :star: or [cite](#bibtex) it, we would be very grateful :sparkling_heart: .
+
 <img src="__assets__/image_animation/teaser/teaser.gif">
 
+
 ## What's New
-[2024/01/03] Add [Replicate Demo & API](https://replicate.com/cjwbw/pia)!
-
-[2024/01/03] Add third-party [Colab](https://github.com/camenduru/PIA-colab)!
-
-[2023/12/28] PIA can animate a 1024x1024 image with just 16GB of GPU memory with `scaled_dot_product_attention`!
-
-[2023/12/25] HuggingFace demo is available now! [🤗 Hub](https://huggingface.co/spaces/Leoxing/PIA/)
-
-[2023/12/22] Release the model and demo of PIA. Try it to make your personalized movie!
-
-- Online Demo on [OpenXLab](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia)
-- Checkpoint on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link) or [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/header/openxlab_models.svg)](https://openxlab.org.cn/models/detail/zhangyiming/PIA)
+- [x] `2024/01/03` [Replicate Demo & API](https://replicate.com/cjwbw/pia) support!
+- [x] `2024/01/03` [Colab](https://github.com/camenduru/PIA-colab) support from [camenduru](https://github.com/camenduru)!
+- [x] `2023/12/28` Support `scaled_dot_product_attention` for 1024x1024 images with just 16GB of GPU memory.
+- [x] `2023/12/25` HuggingFace demo is available now! [🤗 Hub](https://huggingface.co/spaces/Leoxing/PIA/)
+- [x] `2023/12/22` Release the demo of PIA on [OpenXLab](https://openxlab.org.cn/apps/detail/zhangyiming/PiaPia) and checkpoints on [Google Drive](https://drive.google.com/file/d/1RL3Fp0Q6pMD8PbGPULYUnvjqyRQXGHwN/view?usp=drive_link) or [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/header/openxlab_models.svg)](https://openxlab.org.cn/models/detail/zhangyiming/PIA)
 
 ## Setup
 ### Prepare Environment
@@ -294,9 +286,23 @@ torchrun --nnodes=1 --nproc_per_node=1 train.py --config example/config/train.ya
 ```
 
 
-
 ## AnimateBench
 We have open-sourced AnimateBench on [HuggingFace](https://huggingface.co/datasets/ymzhang319/AnimateBench) which includes images, prompts and configs to evaluate PIA and other image animation methods.
+
+
+## BibTex
+```
+@inproceedings{zhang2024pia,
+  title={Pia: Your personalized image animator via plug-and-play modules in text-to-image models},
+  author={Zhang, Yiming and Xing, Zhening and Zeng, Yanhong and Fang, Youqing and Chen, Kai},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages={7747--7756},
+  year={2024}
+}
+```
+
+
+
 
 ## Contact Us
 **Yiming Zhang**: zhangyiming@pjlab.org.cn
@@ -307,3 +313,8 @@ We have open-sourced AnimateBench on [HuggingFace](https://huggingface.co/datase
 
 ## Acknowledgements
 The code is built upon [AnimateDiff](https://github.com/guoyww/AnimateDiff), [Tune-a-Video](https://github.com/showlab/Tune-A-Video) and [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
+
+You may also want to try other project from our team:
+<a target="_blank" href="https://github.com/open-mmlab/mmagic">
+  <img src="https://github.com/open-mmlab/mmagic/assets/28132635/15aab910-f5c4-4b76-af9d-fe8eead1d930" height=20 alt="MMagic"/>
+</a>
