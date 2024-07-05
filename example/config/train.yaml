@@ -38,7 +38,6 @@ train_data:
   sample_size:     256
   sample_stride:   4
   sample_n_frames: 16
-  # uncommend the following if you use petreloss path
   use_petreloss: false
   conf_path: "~/petreloss.conf"
 
