@@ -285,6 +285,11 @@ After preparation, you can train the model by running the following command usin
 torchrun --nnodes=1 --nproc_per_node=1 train.py --config example/config/train.yaml
 ```
 
+or by slurm,
+```shell
+srun --quotatype=reserved --job-name=pia --gres=gpu:8 --ntasks-per-node=8 --ntasks=8  --cpus-per-task=4 --kill-on-bad-exit=1 python train.py --config example/config/train.yaml
+```
+
 
 ## AnimateBench
 We have open-sourced AnimateBench on [HuggingFace](https://huggingface.co/datasets/ymzhang319/AnimateBench) which includes images, prompts and configs to evaluate PIA and other image animation methods.

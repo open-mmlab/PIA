@@ -22,21 +22,16 @@ from tqdm.auto import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
 
 import wandb
+from animatediff.data.dataset import WebVid10M
 from animatediff.models.resnet import InflatedConv3d
+from animatediff.models.unet import UNet3DConditionModel
+from animatediff.pipelines.validation_pipeline import ValidationPipeline
+from animatediff.utils.util import prepare_mask_coef_by_score, save_videos_grid, zero_rank_print
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.models import UNet2DConditionModel
 from diffusers.optimization import get_scheduler
 from diffusers.utils import check_min_version
 from diffusers.utils.import_utils import is_xformers_available
-
-
-try:
-    from animatediff.data.dataset_petrelfs import WebVid10M
-except ImportError:
-    from animatediff.data.dataset import WebVid10M
-from animatediff.models.unet import UNet3DConditionModel
-from animatediff.pipelines.validation_pipeline import ValidationPipeline
-from animatediff.utils.util import prepare_mask_coef_by_score, save_videos_grid, zero_rank_print
 
 
 def init_dist(launcher="slurm", backend="nccl", port=29500, **kwargs):

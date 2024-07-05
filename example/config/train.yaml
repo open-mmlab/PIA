@@ -33,9 +33,13 @@ noise_scheduler_kwargs:
 
 train_data:
   csv_path:        "./results_10M_train.csv"
+  video_folder:    "data/WebVid10M/" # local path: replace it with yours
+  # video_folder: "webvideo:s3://WebVid10M/" # petreloss path: replace it with yours
   sample_size:     256
   sample_stride:   4
   sample_n_frames: 16
+  use_petreloss: false #set this as true if you want to use petreloss path
+  conf_path: "~/petreloss.conf"
 
 validation_data:
   prompts:
