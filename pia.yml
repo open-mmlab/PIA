@@ -141,7 +141,6 @@ dependencies:
     - orjson==3.10.3
     - packaging==24.0
     - pandas==2.2.2
-    - petrel-oss-sdk==v2.2.1-2-g1505ef3-master
     - pillow==10.2.0
     - platformdirs==4.2.2
     - pre-commit==3.7.1
