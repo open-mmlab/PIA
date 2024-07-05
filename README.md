@@ -1,4 +1,4 @@
-# [CVPR 2024] PIA：Personalized Image Animator
+# CVPR 2024 | PIA：Personalized Image Animator
 
 [**PIA: Your Personalized Image Animator via Plug-and-Play Modules in Text-to-Image Models**](https://arxiv.org/abs/2312.13964)
 
