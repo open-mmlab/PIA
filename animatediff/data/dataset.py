@@ -1,4 +1,5 @@
 import csv
+import io
 import os
 import random
 
@@ -9,7 +10,14 @@ import torchvision.transforms as transforms
 from decord import VideoReader
 from torch.utils.data.dataset import Dataset
 
+import animatediff.data.video_transformer as video_transforms
 from animatediff.utils.util import detect_edges, zero_rank_print
+
+
+try:
+    from petrel_client.client import Client
+except ImportError as e:
+    print(e)
 
 
 def get_score(video_data, cond_frame_idx, weight=[1.0, 1.0, 1.0, 1.0], use_edge=True):
@@ -56,17 +64,24 @@ class WebVid10M(Dataset):
         sample_stride=4,
         sample_n_frames=16,
         is_image=False,
+        use_petreloss=False,
+        conf_path=None,
     ):
+        if use_petreloss:
+            self._client = Client(conf_path=conf_path, enable_mc=True)
+        else:
+            self._client = None
+        self.video_folder = video_folder
+        self.sample_stride = sample_stride
+        self.sample_n_frames = sample_n_frames
+        self.is_image = is_image
+        self.temporal_sampler = video_transforms.TemporalRandomCrop(sample_n_frames * sample_stride)
+
         zero_rank_print(f"loading annotations from {csv_path} ...")
         with open(csv_path, "r") as csvfile:
             self.dataset = list(csv.DictReader(csvfile))
         self.length = len(self.dataset)
         zero_rank_print(f"data scale: {self.length}")
-
-        self.video_folder = video_folder
-        self.sample_stride = sample_stride
-        self.sample_n_frames = sample_n_frames
-        self.is_image = is_image
 
         sample_size = tuple(sample_size) if not isinstance(sample_size, int) else (sample_size, sample_size)
         self.pixel_transforms = transforms.Compose(
@@ -80,17 +95,27 @@ class WebVid10M(Dataset):
 
     def get_batch(self, idx):
         video_dict = self.dataset[idx]
-        videoid, name, _ = video_dict["videoid"], video_dict["name"], video_dict["page_dir"]
+        videoid, name, page_dir = video_dict["videoid"], video_dict["name"], video_dict["page_dir"]
 
-        video_dir = os.path.join(self.video_folder, f"{videoid}.mp4")
-        video_reader = VideoReader(video_dir)
+        if self._client is not None:
+            video_dir = os.path.join(self.video_folder, page_dir, f"{videoid}.mp4")
+            video_bytes = self._client.Get(video_dir)
+            video_bytes = io.BytesIO(video_bytes)
+            # ensure not reading zero byte
+            assert video_bytes.getbuffer().nbytes != 0
+            video_reader = VideoReader(video_bytes)
+        else:
+            video_dir = os.path.join(self.video_folder, f"{videoid}.mp4")
+            video_reader = VideoReader(video_dir)
+
         total_frames = len(video_reader)
-        # video_length = len(video_reader)
-        # clip_length = min(video_length, (self.sample_n_frames - 1) * self.sample_stride + 1)
-        # start_idx = random.randint(0, video_length - clip_length)
-        # batch_index = np.linspace(start_idx, start_idx + clip_length - 1, self.sample_n_frames, dtype=int)
+        if not self.is_image:
+            start_frame_ind, end_frame_ind = self.temporal_sampler(total_frames)
+            assert end_frame_ind - start_frame_ind >= self.sample_n_frames
+            frame_indice = np.linspace(start_frame_ind, end_frame_ind - 1, self.sample_n_frames, dtype=int)
+        else:
+            frame_indice = [random.randint(0, total_frames - 1)]
 
-        frame_indice = [random.randint(0, total_frames - 1)]
         pixel_values_np = video_reader.get_batch(frame_indice).asnumpy()
         cond_frames = random.randint(0, self.sample_n_frames - 1)
 
@@ -114,13 +139,12 @@ class WebVid10M(Dataset):
                 break
 
             except Exception:
-                # zero_rank_print(e)
+                zero_rank_print("Error loading video, retrying...")
                 idx = random.randint(0, self.length - 1)
 
         video = self.pixel_transforms(video)
         video_ = video.clone().permute(0, 2, 3, 1).numpy() / 2 + 0.5
         video_ = video_ * 255
-        # video_ = video_.astype(np.uint8)
         score = get_score(video_, cond_frame_idx=cond_frames)
         del video_
         sample = {"pixel_values": video, "text": name, "score": score, "cond_frames": cond_frames, "vid": videoid}
