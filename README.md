@@ -314,7 +314,7 @@ We have open-sourced AnimateBench on [HuggingFace](https://huggingface.co/datase
 
 **Zhening Xing**: xingzhening@pjlab.org.cn
 
-**Yanhong Zeng**: zengyanhong@pjlab.org.cn
+**Yanhong Zeng**: zengyh1900@gmail.com
 
 ## Acknowledgements
 The code is built upon [AnimateDiff](https://github.com/guoyww/AnimateDiff), [Tune-a-Video](https://github.com/showlab/Tune-A-Video) and [PySceneDetect](https://github.com/Breakthrough/PySceneDetect)
