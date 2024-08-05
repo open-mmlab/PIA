@@ -14,19 +14,15 @@
 """Conversion script for the Stable Diffusion checkpoints."""
 
 import re
-from typing import Optional
 
-import torch
 from transformers import (
     CLIPImageProcessor,
     CLIPTextModel,
-    CLIPVisionConfig,
     CLIPVisionModelWithProjection,
 )
 
 from diffusers.schedulers import (
     DDIMScheduler,
-    DDPMScheduler,
 )
 
 
@@ -177,7 +173,7 @@ def assign_to_checkpoint(
             checkpoint[new_path] = old_checkpoint[path["old"]][:, :, 0]
         elif "to_out.0.weight" in new_path:
             checkpoint[new_path] = old_checkpoint[path["old"]].squeeze()
-        elif any([qkv in new_path for qkv in ["to_q", "to_k", "to_v"]]):
+        elif any(qkv in new_path for qkv in ["to_q", "to_k", "to_v"]):
             checkpoint[new_path] = old_checkpoint[path["old"]].squeeze()
         else:
             checkpoint[new_path] = old_checkpoint[path["old"]]
@@ -296,16 +292,6 @@ def create_diffusers_schedular(original_config):
         beta_schedule="scaled_linear",
     )
     return schedular
-
-
-def create_ldm_bert_config(original_config):
-    bert_params = original_config.model.params.cond_stage_config.params
-    config = LDMBertConfig(
-        d_model=bert_params.n_embed,
-        encoder_layers=bert_params.n_layer,
-        encoder_ffn_dim=bert_params.n_embed * 4,
-    )
-    return config
 
 
 def convert_ldm_unet_checkpoint(checkpoint, config, path=None, extract_ema=False, controlnet=False):
@@ -654,56 +640,6 @@ def convert_ldm_vae_checkpoint(checkpoint, config, only_decoder=False, only_enco
     return new_checkpoint
 
 
-def convert_ldm_bert_checkpoint(checkpoint, config):
-    def _copy_attn_layer(hf_attn_layer, pt_attn_layer):
-        hf_attn_layer.q_proj.weight.data = pt_attn_layer.to_q.weight
-        hf_attn_layer.k_proj.weight.data = pt_attn_layer.to_k.weight
-        hf_attn_layer.v_proj.weight.data = pt_attn_layer.to_v.weight
-
-        hf_attn_layer.out_proj.weight = pt_attn_layer.to_out.weight
-        hf_attn_layer.out_proj.bias = pt_attn_layer.to_out.bias
-
-    def _copy_linear(hf_linear, pt_linear):
-        hf_linear.weight = pt_linear.weight
-        hf_linear.bias = pt_linear.bias
-
-    def _copy_layer(hf_layer, pt_layer):
-        # copy layer norms
-        _copy_linear(hf_layer.self_attn_layer_norm, pt_layer[0][0])
-        _copy_linear(hf_layer.final_layer_norm, pt_layer[1][0])
-
-        # copy attn
-        _copy_attn_layer(hf_layer.self_attn, pt_layer[0][1])
-
-        # copy MLP
-        pt_mlp = pt_layer[1][1]
-        _copy_linear(hf_layer.fc1, pt_mlp.net[0][0])
-        _copy_linear(hf_layer.fc2, pt_mlp.net[2])
-
-    def _copy_layers(hf_layers, pt_layers):
-        for i, hf_layer in enumerate(hf_layers):
-            if i != 0:
-                i += i
-            pt_layer = pt_layers[i : i + 2]
-            _copy_layer(hf_layer, pt_layer)
-
-    hf_model = LDMBertModel(config).eval()
-
-    # copy  embeds
-    hf_model.model.embed_tokens.weight = checkpoint.transformer.token_emb.weight
-    hf_model.model.embed_positions.weight.data = checkpoint.transformer.pos_emb.emb.weight
-
-    # copy layer norm
-    _copy_linear(hf_model.model.layer_norm, checkpoint.transformer.norm)
-
-    # copy hidden layers
-    _copy_layers(hf_model.model.layers, checkpoint.transformer.attn_layers.layers)
-
-    _copy_linear(hf_model.to_logits, checkpoint.transformer.to_logits)
-
-    return hf_model
-
-
 def convert_ldm_clip_checkpoint(checkpoint):
     keys = list(checkpoint.keys())
 
@@ -737,73 +673,6 @@ textenc_transformer_conversion_lst = [
 ]
 protected = {re.escape(x[0]): x[1] for x in textenc_transformer_conversion_lst}
 textenc_pattern = re.compile("|".join(protected.keys()))
-
-
-def convert_paint_by_example_checkpoint(checkpoint):
-    config = CLIPVisionConfig.from_pretrained("openai/clip-vit-large-patch14")
-    model = PaintByExampleImageEncoder(config)
-
-    keys = list(checkpoint.keys())
-
-    text_model_dict = {}
-
-    for key in keys:
-        if key.startswith("cond_stage_model.transformer"):
-            text_model_dict[key[len("cond_stage_model.transformer.") :]] = checkpoint[key]
-
-    # load clip vision
-    model.model.load_state_dict(text_model_dict)
-
-    # load mapper
-    keys_mapper = {
-        k[len("cond_stage_model.mapper.res") :]: v
-        for k, v in checkpoint.items()
-        if k.startswith("cond_stage_model.mapper")
-    }
-
-    MAPPING = {
-        "attn.c_qkv": ["attn1.to_q", "attn1.to_k", "attn1.to_v"],
-        "attn.c_proj": ["attn1.to_out.0"],
-        "ln_1": ["norm1"],
-        "ln_2": ["norm3"],
-        "mlp.c_fc": ["ff.net.0.proj"],
-        "mlp.c_proj": ["ff.net.2"],
-    }
-
-    mapped_weights = {}
-    for key, value in keys_mapper.items():
-        prefix = key[: len("blocks.i")]
-        suffix = key.split(prefix)[-1].split(".")[-1]
-        name = key.split(prefix)[-1].split(suffix)[0][1:-1]
-        mapped_names = MAPPING[name]
-
-        num_splits = len(mapped_names)
-        for i, mapped_name in enumerate(mapped_names):
-            new_name = ".".join([prefix, mapped_name, suffix])
-            shape = value.shape[0] // num_splits
-            mapped_weights[new_name] = value[i * shape : (i + 1) * shape]
-
-    model.mapper.load_state_dict(mapped_weights)
-
-    # load final layer norm
-    model.final_layer_norm.load_state_dict(
-        {
-            "bias": checkpoint["cond_stage_model.final_ln.bias"],
-            "weight": checkpoint["cond_stage_model.final_ln.weight"],
-        }
-    )
-
-    # load final proj
-    model.proj_out.load_state_dict(
-        {
-            "bias": checkpoint["proj_out.bias"],
-            "weight": checkpoint["proj_out.weight"],
-        }
-    )
-
-    # load uncond vector
-    model.uncond_vector.data = torch.nn.Parameter(checkpoint["learnable_vector"])
-    return model
 
 
 def convert_open_clip_checkpoint(checkpoint):
@@ -880,67 +749,3 @@ def stable_unclip_image_encoder(original_config):
         )
 
     return feature_extractor, image_encoder
-
-
-def stable_unclip_image_noising_components(
-    original_config, clip_stats_path: Optional[str] = None, device: Optional[str] = None
-):
-    """
-    Returns the noising components for the img2img and txt2img unclip pipelines.
-
-    Converts the stability noise augmentor into
-    1. a `StableUnCLIPImageNormalizer` for holding the CLIP stats
-    2. a `DDPMScheduler` for holding the noise schedule
-
-    If the noise augmentor config specifies a clip stats path, the `clip_stats_path` must be provided.
-    """
-    noise_aug_config = original_config.model.params.noise_aug_config
-    noise_aug_class = noise_aug_config.target
-    noise_aug_class = noise_aug_class.split(".")[-1]
-
-    if noise_aug_class == "CLIPEmbeddingNoiseAugmentation":
-        noise_aug_config = noise_aug_config.params
-        embedding_dim = noise_aug_config.timestep_dim
-        max_noise_level = noise_aug_config.noise_schedule_config.timesteps
-        beta_schedule = noise_aug_config.noise_schedule_config.beta_schedule
-
-        image_normalizer = StableUnCLIPImageNormalizer(embedding_dim=embedding_dim)
-        image_noising_scheduler = DDPMScheduler(num_train_timesteps=max_noise_level, beta_schedule=beta_schedule)
-
-        if "clip_stats_path" in noise_aug_config:
-            if clip_stats_path is None:
-                raise ValueError("This stable unclip config requires a `clip_stats_path`")
-
-            clip_mean, clip_std = torch.load(clip_stats_path, map_location=device)
-            clip_mean = clip_mean[None, :]
-            clip_std = clip_std[None, :]
-
-            clip_stats_state_dict = {
-                "mean": clip_mean,
-                "std": clip_std,
-            }
-
-            image_normalizer.load_state_dict(clip_stats_state_dict)
-    else:
-        raise NotImplementedError(f"Unknown noise augmentor class: {noise_aug_class}")
-
-    return image_normalizer, image_noising_scheduler
-
-
-def convert_controlnet_checkpoint(
-    checkpoint, original_config, checkpoint_path, image_size, upcast_attention, extract_ema
-):
-    ctrlnet_config = create_unet_diffusers_config(original_config, image_size=image_size, controlnet=True)
-    ctrlnet_config["upcast_attention"] = upcast_attention
-
-    ctrlnet_config.pop("sample_size")
-
-    controlnet_model = ControlNetModel(**ctrlnet_config)
-
-    converted_ctrl_checkpoint = convert_ldm_unet_checkpoint(
-        checkpoint, ctrlnet_config, path=checkpoint_path, extract_ema=extract_ema, controlnet=True
-    )
-
-    controlnet_model.load_state_dict(converted_ctrl_checkpoint)
-
-    return controlnet_model

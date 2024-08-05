@@ -140,7 +140,7 @@ def convert_lora_model_level(
             weight_down = state_dict[pair_keys[1]].to(torch.float32)
             weight_up = weight_up.view(weight_up.size(0), -1)
             weight_down = weight_down.view(weight_down.size(0), -1)
-            shape = [e for e in curr_layer.weight.data.shape]
+            shape = list(curr_layer.weight.data.shape)
             shape[1] = 4
             curr_layer.weight.data[:, :4, ...] += alpha * (weight_up @ weight_down).view(*shape)
         elif "conv" in pair_keys[0]:
@@ -148,7 +148,7 @@ def convert_lora_model_level(
             weight_down = state_dict[pair_keys[1]].to(torch.float32)
             weight_up = weight_up.view(weight_up.size(0), -1)
             weight_down = weight_down.view(weight_down.size(0), -1)
-            shape = [e for e in curr_layer.weight.data.shape]
+            shape = list(curr_layer.weight.data.shape)
             curr_layer.weight.data += alpha * (weight_up @ weight_down).view(*shape)
         elif len(state_dict[pair_keys[0]].shape) == 4:
             weight_up = state_dict[pair_keys[0]].squeeze(3).squeeze(2).to(torch.float32)
@@ -202,7 +202,9 @@ if __name__ == "__main__":
     lora_prefix_text_encoder = args.lora_prefix_text_encoder
     alpha = args.alpha
 
-    pipe = convert(base_model_path, checkpoint_path, lora_prefix_unet, lora_prefix_text_encoder, alpha)
+    pipe = convert_lora_model_level(
+        base_model_path, checkpoint_path, lora_prefix_unet, lora_prefix_text_encoder, alpha
+    )
 
     pipe = pipe.to(args.device)
     pipe.save_pretrained(args.dump_path, safe_serialization=args.to_safetensors)

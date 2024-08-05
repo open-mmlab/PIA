@@ -52,7 +52,7 @@ validation_data:
   mask_sim_range: [0.2, 1.0]
 
 trainable_modules:
-  - 'cond_in.'
+  - 'conv_in.'
   - 'motion_modules'
 
 # set the path to the finetuned unet's image layers

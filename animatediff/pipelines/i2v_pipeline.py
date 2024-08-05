@@ -232,7 +232,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
             need_strict = not (only_load_vae_decoder or only_load_vae_encoder)
             vae.load_state_dict(converted_vae_checkpoint, strict=need_strict)
             print("Prefix in loaded VAE checkpoint: ")
-            print(set([k.split(".")[0] for k in converted_vae_checkpoint.keys()]))
+            print({k.split(".")[0] for k in converted_vae_checkpoint.keys()})
 
             # load text encoder
             text_encoder_checkpoint = convert_ldm_clip_checkpoint(base_model_state_dict)
@@ -262,7 +262,7 @@ class I2VPipeline(DiffusionPipeline, IPAdapterMixin, TextualInversionLoaderMixin
                 only_encoder=only_load_vae_encoder,
             )
             print("Prefix in loaded VAE checkpoint: ")
-            print(set([k.split(".")[0] for k in converted_vae_checkpoint.keys()]))
+            print({k.split(".")[0] for k in converted_vae_checkpoint.keys()})
             need_strict = not (only_load_vae_decoder or only_load_vae_encoder)
             vae.load_state_dict(converted_vae_checkpoint, strict=need_strict)
             print(" <<< Loaded VAE        <<<")
